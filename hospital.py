@@ -65,4 +65,3 @@ class Hospital(Gclass):
     @creation_date.setter
     def creation_date(self, creation_date):
         self._creation_date = creation_date
-
