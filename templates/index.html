@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{{ class_name }} - Gclass System</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css')}}">
+    </head>
+    <body>
+        <div class="navigation" style="text-align: center; margin-bottom: 20px;">
+            <a href="/?class=Hospital" class="button1">Hospitais</a>
+            <a href="/?class=Department" class="button1">Departamentos</a>
+            <a href="/?class=Device" class="button1">Dispositivos</a>
+            <a href="/?class=Utilization" class="button1">Utilizações</a>
+        </div>
+
+        <div class="dados">
+            <h1>{{ header }}</h1>
+            <br>
+            <button id="edit" type="button" {{butshow}} onclick="window.location.href = '/?option=edit'" class="button1">Editar</button>
+            <button id="delete" type="button" {{butshow}} onclick="window.location.href = '/?option=delete'" class="button1">Eliminar</button>
+            <button id="insert" type="button" {{butshow}} onclick="window.location.href = '/?option=insert'" class="button1">Inserir</button>
+            <button id="save" type="submit" form="form" {{butedit}} class="button1">Guardar</button>
+            <button id="cancel" type="button" {{butedit}} onclick="window.location.href = '/?option=cancel'" class="button1">Cancelar</button>
+            <button id="exit" type="button" {{butshow}} onclick="window.location.href = '/?option=exit'" class="button1">Sair</button>
+            <br><br>
+
+            <form id="form" action="/?option=save" method="post">
+                <label for="id">ID:</label>
+                <input type="text" readonly id="id" name="id" value="{{id}}" size="5"/>
+                <br><br>
+
+                {% for field_name, value in fields.items() %}
+                    <label for="{{ field_name }}">{{ field_name.replace('_', ' ').title() }}:</label>
+                    <input type="text" {{butedit}} id="{{ field_name }}" name="{{ field_name }}" value="{{ value }}" size="30"/>
+                    <br><br>
+                {% endfor %}
+            </form>
+
+            <br>
+            <button id="first" type="button" {{butshow}} onclick="window.location.href = '/?option=first'" class="button1">Primeiro</button>
+            <button id="previous" type="button" {{butshow}} onclick="window.location.href = '/?option=previous'" class="button1">Anterior</button>
+            <button id="next" type="button" {{butshow}} onclick="window.location.href = '/?option=next'" class="button1">Próximo</button>
+            <button id="last" type="button" {{butshow}} onclick="window.location.href = '/?option=last'" class="button1">Último</button>
+        </div>
+    </body>
+</html>
