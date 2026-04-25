@@ -4,7 +4,8 @@ Created on Sat Apr 25 16:28:47 2026
 
 @author: couto
 """
-# Class Device - generic version with inheritance
+
+#Revisto por: Pedro
 from classes.gclass import Gclass
 
 class Device(Gclass):
@@ -13,29 +14,27 @@ class Device(Gclass):
     pos = 0
     sortkey = ''
 
-    # Attribute names list (id primeiro e com _)
-    att = ['_id','_category','_name']
+    att = ['_id', '_category']
 
-    # Class header title
     header = 'Devices'
 
-    # Field descriptions
-    des = ['Id','Category','Name']
+    des = ['Id', 'Category']
 
-    # Constructor
-    def __init__(self, id, category, name):
+
+    def __init__(self, id, category):
         super().__init__()
 
         id = Device.get_id(id)
         self._id = id
-        self._category = category
-        self._name = name
+        
+        self._category = str(category)
 
         # Guardar objeto
         Device.obj[id] = self
         Device.lst.append(id)
 
-    # id property
+    # --- PROPERTIES ---
+
     @property
     def id(self):
         return self._id
@@ -44,7 +43,6 @@ class Device(Gclass):
     def id(self, id):
         self._id = id
 
-    # category property
     @property
     def category(self):
         return self._category
@@ -52,12 +50,3 @@ class Device(Gclass):
     @category.setter
     def category(self, category):
         self._category = category
-
-    # name property
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, name):
-        self._name = name
