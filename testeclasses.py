@@ -210,7 +210,7 @@ while op != 'q':
             value = atype(input('Value: '))
             fobjs = test_class.find(value, attrib)
             if fobjs and len(fobjs) > 0:
-                # FIX: get the id via the first private attribute, not .id
+                # FIX: gets the id via the first private attribute, not .id
                 first_attr = list(fobjs[0].__dict__.keys())[0]
                 test_class.current(getattr(fobjs[0], first_attr))
                 for obj in fobjs:
