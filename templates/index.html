@@ -35,6 +35,22 @@
                     <input type="text" {{butedit}} id="{{ field_name }}" name="{{ field_name }}" value="{{ value }}" size="30"/>
                     <br><br>
                 {% endfor %}
+	{% if show_list %}
+	 <table border="1">
+  	 <tr>
+   	 {% for title in titles %}
+    	  <th>{{ title }}</th>
+	 {% endfor %}
+	 </tr>
+	 {% for row in list_data %}
+	  <tr>
+	  {% for att in row.values() %}
+     	  	<td>{{ att }}</td>
+   	  {% endfor %}
+ 	  </tr>
+	 {% endfor %}
+	 </table>
+	{% endif %}
             </form>
 
             <br>
@@ -42,6 +58,7 @@
             <button id="previous" type="button" {{butshow}} onclick="window.location.href = '/?option=previous'" class="button1">Anterior</button>
             <button id="next" type="button" {{butshow}} onclick="window.location.href = '/?option=next'" class="button1">Próximo</button>
             <button id="last" type="button" {{butshow}} onclick="window.location.href = '/?option=last'" class="button1">Último</button>
+	    <a href="/?class={{ class_name }}&option=list"><button>List</button></a>
         </div>
     </body>
 </html>

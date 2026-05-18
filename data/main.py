@@ -14,12 +14,14 @@ from classes.department import Department
 from classes.device import Device
 from classes.utilization import Utilization
 
-db_path = "HospitalData.db"
+db_path = os.path.join(os.path.dirname(__file__), 'data', 'HospitalData.db')
 Gclass.path = db_path
 
 #se esteve a dar erro, entao temos de dar delete à bd
 if os.path.exists(db_path):
+    sqlite3.connect(db_path).close()  # força fechar ligações pendentes
     os.remove(db_path)
+
 
 # precisamos das tabelas para organizar os dados
 con = sqlite3.connect(db_path)

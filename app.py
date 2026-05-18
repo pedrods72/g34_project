@@ -18,7 +18,7 @@ appy.secret_key = 'CHAVE_SECRETA_HOSPITAL'
 
 
 #isto garante que o Flask procura a base de dados exatamente na mesma pasta onde o ficheiro app.py está guardado, independentemente do terminal.
-db_name = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'HospitalData.db')
+db_name = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data', 'HospitalData.db')
 
 # Lê os dados
 Hospital.read(db_name)
@@ -50,6 +50,8 @@ def index():
     
 #instruções para o site funcionar
     butshow, butedit = "enabled", "disabled"
+    show_list = False
+    list_data = []
     option = request.args.get("option")
 
     if option == "edit":
@@ -68,9 +70,9 @@ def index():
         # Gerar a string para o from_string baseada nos campos do formulário
         # O primeiro campo é sempre o ID (0 para auto-incremento)
         data = ["0"] 
-        for attribute in cl.att[1:]: # Ignora o _id
+        for attribute in cl.att[0:]: # Ignora o _id
             # Busca o valor no formulário (o nome do input no HTML deve ser o nome do atributo sem _)
-            field_name = attribute[1:] 
+            field_name = attribute[0:] 
             data.append(request.form[field_name])
         
         strobj = ";".join(data)
@@ -79,10 +81,15 @@ def index():
         cl.last()
     elif prev_option == 'edit' and option == 'save':
         obj = cl.current()
-        for attribute in cl.att[1:]:
-            field_name = attribute[1:]
+        for attribute in cl.att[0:]:
+            field_name = attribute[0:]
             setattr(obj, field_name, request.form[field_name])
         cl.update(obj.id)
+    elif option == "list":
+        show_list = True
+        list_data = [
+            {att[1:]: getattr(cl.obj[id], att[1:]) for att in cl.att}
+            for id in cl.lst]
     elif option == "first":
         cl.first()
     elif option == "previous":
@@ -101,21 +108,26 @@ def index():
     if option == 'insert' or len(cl.lst) == 0:
         obj_id = cl.get_id(0)
         # criamos um dicionário vazio para o template não dar erro ao ler campos
-        fields = {att[1:]: "" for att in cl.att[1:]}
+        fields = {att[0:]: "" for att in cl.att[0:]}
     else:
         obj_id = obj.id
         # criamos um dicionário com os valores atuais do objeto
-        fields = {att[1:]: getattr(obj, att[1:]) for att in cl.att[1:]}
+        fields = {att[0:]: getattr(obj, att[0:]) for att in cl.att[0:]}
 
-    return render_template("index.html", 
+    return render_template("index.html",
                            class_name=current_class_name,
-                           id=obj_id, 
+                           id=obj_id,
                            fields=fields,
                            header=cl.header,
                            titles=cl.des,
-                           butshow=butshow, 
-                           butedit=butedit)
+                           butshow=butshow,
+                           butedit=butedit,
+                           show_list=show_list,
+                           list_data=list_data)
 
 if __name__ == "__main__":
     # use_reloader=False impede o flask de reiniciar e esconder o erro real (para detetar melhor os erros)
     appy.run(debug=True, use_reloader=False)
+    
+    
+#acrescentar funcionalidades ao site (mexer com amounts, datas, melhorar a informação apresentada, se calhar graficos)
