@@ -88,37 +88,93 @@ while op != 'q':
             p1 = proto        # marks that this temp object must be removed
         else:
             proto = test_class.current()
-
+    
         str_list = list(proto.__dict__.keys())
         attrib = str_list[0]
         atype = type(getattr(proto, attrib))
-
+    
         print('leave blank to auto-increment')
+        
         id_input = input(f'{attrib[1:]} = ')
         if id_input == "":
-            id_val = 0          # 0 signals auto-increment to the class
+            id_val = 0        # 0 signals auto-increment to the class
         else:
-            id_val = int(id_input)
-
+            try:
+                id_val = int(id_input)
+                if id_val < 0:
+                    print("Erro: O ID principal não pode ser negativo. Operação cancelada.")
+                    continue
+            except ValueError:
+                print("Erro: Introduza um número inteiro válido. Operação cancelada.")
+                continue
+    
         strarg = f'test_class({id_val}'
+        
+        erro_detetado = False
+        
         for i in range(1, len(str_list)):
             attrib = str_list[i]
+            clean_name = attrib[1:] 
             atype = type(getattr(proto, attrib))
+            
+            user_input = input(f'{clean_name} = ')
+            
+            if 'date' in clean_name:
+                try:
+                    datetime.date.fromisoformat(user_input)
+                    value = user_input
+                except ValueError:
+                    print("Erro: Introduza uma data válida no formato AAAA-MM-DD. Operação cancelada.")
+                    erro_detetado = True
+                    break
+            elif atype in (datetime.date, str):
+                value = user_input
+            else:
+                try:
+                    value = atype(user_input)
+                except ValueError:
+                    print(f"Erro: Introduza um valor do tipo correto ({atype.__name__}). Operação cancelada.")
+                    erro_detetado = True
+                    break
+            
+            if clean_name.endswith('_id') or clean_name in ['hospital', 'department', 'device']:
+                related_class = None
+                
+                if 'hospital' in clean_name:
+                    from classes.hospital import Hospital
+                    related_class = Hospital
+                elif 'department' in clean_name:
+                    from classes.department import Department
+                    related_class = Department
+                elif 'device' in clean_name:
+                    from classes.device import Device
+                    related_class = Device
+                
+                if related_class is not None:
+                    related_class.read('data/' + db)
+                    
+                    if value not in related_class.lst:
+                        print(f"Erro: O ID {value} não existe na tabela {related_class.__name__}. Operação cancelada.")
+                        erro_detetado = True
+                        break
+            
             if atype in (datetime.date, str):
-                value = input(f'{attrib[1:]} = ')
                 strarg += f',"{value}"'
             else:
-                value = atype(input(f'{attrib[1:]} = '))
                 strarg += f',{value}'
+                
+        if erro_detetado:
+            continue
+    
         strarg += ')'
-
+    
         # FIX: remove the temporary prototype BEFORE inserting the real one
         if p1 is not None:
             first_attr = list(proto.__dict__.keys())[0]
             temp_id = getattr(p1, first_attr)
             if temp_id in test_class.lst:
                 test_class.remove(temp_id)
-
+    
         print(strarg)
         pobj = eval(strarg)
         first_attr = list(pobj.__dict__.keys())[0]
