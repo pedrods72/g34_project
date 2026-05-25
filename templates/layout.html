@@ -8,18 +8,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="sidebar">
+    <header class="topbar">
+    <div class="logo">
         <h2>Hospital Management</h2>
-        <nav>
-            <a href="/?class=Hospital" class="nav-link">Hospitais</a>
-            <a href="/?class=Department" class="nav-link">Departamentos</a>
-            <a href="/?class=Device" class="nav-link">Dispositivos</a>
-            <a href="/?class=Utilization" class="nav-link">Utilizações</a>
-            <hr style="border: 0.5px solid #334155; margin: 20px 0;">
-            <a href="/stats" class="nav-link">Estatísticas</a>
-            <a href="/search?class=Hospital" class="nav-link">Pesquisar</a>
-        </nav>
     </div>
+    
+    <nav>
+        <a href="/?class=Hospital">Hospitais</a>
+        <a href="/?class=Department">Departamentos</a>
+        <a href="/?class=Device">Dispositivos</a>
+        <a href="/?class=Utilization">Utilizações</a>
+        <a href="/stats">Estatísticas</a>
+        <a href="/search?class=Hospital">Pesquisar</a>
+    </nav>
+</header>
 
     <div class="main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -35,4 +37,5 @@
         {% block content %}{% endblock %}
     </div>
 </body>
+</html>
 </html>
