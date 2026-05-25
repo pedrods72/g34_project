@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="card" style="margin-bottom: 25px;">
+    <h1 style="margin-top: 0; margin-bottom: 20px;">Pesquisa Dinâmica — {{ class_name }}</h1>
+    
+    <form method="get" action="/search">
+        <input type="hidden" name="class" value="{{ class_name }}">
+        
+        <div style="display: grid; grid-template-columns: 1fr 2fr auto; gap: 15px; align-items: end;">
+            <div class="form-group" style="margin: 0;">
+                <label>Filtrar por Atributo</label>
+                <select name="att">
+                    {% for a in attributes %}
+                        <option value="{{ a }}" {{ 'selected' if a == att }}>{{ a.replace('_', ' ').title() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin: 0;">
+                <label>Termo de Pesquisa</label>
+                <input type="text" name="value" value="{{ value }}" placeholder="Escreve o que procuras...">
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="height: 45px; padding: 0 30px;">Buscar</button>
+        </div>
+    </form>
+</div>
+
+{% if results %}
+<div class="card">
+    <p style="color: #64748b; font-weight: 600; margin-top: 0;">{{ results|length }} resultado(s) encontrado(s):</p>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    {% for a in attributes %}
+                        <th>{{ a.replace('_', ' ').title() }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for obj in results %}
+                <tr>
+                    {% for a in attributes %}
+                        <td>{{ getattr(obj, a) }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% elif value %}
+<div class="card" style="text-align: center; padding: 40px; color: #64748b;">
+    <p style="margin: 0; font-size: 1.1rem;">Nenhum registo corresponde à pesquisa efetuada.</p>
+</div>
+{% endif %}
+
+{% endblock %}
