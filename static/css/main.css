@@ -11,17 +11,18 @@ body {
     background-color: var(--bg);
     color: var(--text);
     margin: 0;
-    display: flex;
+    display: block;
 }
 
 /* Sidebar Navigation */
 .sidebar {
-    width: 260px;
     background: var(--dark);
-    height: 100vh;
-    position: fixed;
     color: white;
-    padding: 20px;
+    padding: 20px 40px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .sidebar h2 {
@@ -49,7 +50,6 @@ body {
 
 /* Main Content */
 .main-content {
-    margin-left: 260px;
     padding: 40px;
     width: 100%;
 }
@@ -96,3 +96,12 @@ table {
 th { background: #f1f5f9; text-align: left; padding: 15px; }
 td { padding: 15px; border-bottom: 1px solid #f1f5f9; }
 tr:hover { background: #f8fafc; }
+
+.sidebar nav{
+    display:flex;
+    gap:12px;
+}
+
+.nav-link{
+    margin-bottom:0;
+}
