@@ -1,36 +1,100 @@
-{% extends "layout.html" %}
+Então clica no lápis ✏️, faz Ctrl+A para selecionar tudo, apaga, e cola este código:
+html{% extends "layout.html" %}
 {% block content %}
 
 <div class="card" style="margin-bottom: 25px;">
-    <h1 style="margin-top: 0; margin-bottom: 20px;">Pesquisa Dinâmica — {{ class_name }}</h1>
-    
-    <form method="get" action="/search">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+        <h1 style="margin:0;">Pesquisa Avançada</h1>
+        <span style="background:#3b82f6; color:white; padding:4px 12px; border-radius:20px; font-size:0.8rem; font-weight:600;">{{ class_name }}</span>
+    </div>
+
+    <form method="get" action="/search" id="search-form">
         <input type="hidden" name="class" value="{{ class_name }}">
-        
-        <div style="display: grid; grid-template-columns: 1fr 2fr auto; gap: 15px; align-items: end;">
-            <div class="form-group" style="margin: 0;">
-                <label>Filtrar por Atributo</label>
-                <select name="att">
+
+        <p style="font-size:0.72rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin:0 0 10px;">Filtros</p>
+
+        <div id="filters-container">
+            <div class="filter-row" style="display:grid; grid-template-columns:1fr 160px 2fr auto; gap:10px; align-items:end; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:10px;">
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.72rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Atributo</label>
+                    <select name="att[]" style="padding:8px 10px; font-size:0.9rem;">
+                        {% for a in attributes %}
+                            <option value="{{ a }}" {{ 'selected' if a == att }}>{{ a.replace('_', ' ').title() }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.72rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Operador</label>
+                    <select name="op[]" style="padding:8px 10px; font-size:0.9rem;">
+                        <option value="contains">Contém</option>
+                        <option value="equals">Igual a</option>
+                        <option value="starts">Começa por</option>
+                        <option value="ends">Termina em</option>
+                        <option value="gt">Maior que</option>
+                        <option value="lt">Menor que</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.72rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Valor</label>
+                    <input type="text" name="value[]" value="{{ value }}" placeholder="Escreve o que procuras..." style="padding:8px 10px; font-size:0.9rem;">
+                </div>
+                <button type="button" onclick="removeFilter(this)" style="visibility:hidden; background:none; border:1px solid #fca5a5; color:#ef4444; border-radius:7px; width:36px; height:36px; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; align-self:flex-end;">✕</button>
+            </div>
+        </div>
+
+        <button type="button" onclick="addFilter()" style="background:none; border:1.5px dashed #94a3b8; color:#64748b; border-radius:8px; padding:9px 18px; cursor:pointer; font-size:0.88rem; font-weight:600; display:inline-flex; align-items:center; gap:6px; margin-bottom:20px;">
+            ＋ Adicionar filtro
+        </button>
+
+        <hr style="border:none; border-top:1px solid #e2e8f0; margin:0 0 20px;">
+
+        <p style="font-size:0.72rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin:0 0 10px;">Opções Avançadas</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:20px;">
+            <div class="form-group" style="margin:0;">
+                <label style="font-size:0.72rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Ordenar por</label>
+                <select name="sort_by" style="padding:8px 10px; font-size:0.9rem;">
+                    <option value="">— Sem ordenação —</option>
                     {% for a in attributes %}
-                        <option value="{{ a }}" {{ 'selected' if a == att }}>{{ a.replace('_', ' ').title() }}</option>
+                        <option value="{{ a }}" {{ 'selected' if sort_by == a }}>{{ a.replace('_', ' ').title() }}</option>
                     {% endfor %}
                 </select>
             </div>
-            
-            <div class="form-group" style="margin: 0;">
-                <label>Termo de Pesquisa</label>
-                <input type="text" name="value" value="{{ value }}" placeholder="Escreve o que procuras...">
+            <div class="form-group" style="margin:0;">
+                <label style="font-size:0.72rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Ordem</label>
+                <select name="sort_dir" style="padding:8px 10px; font-size:0.9rem;">
+                    <option value="asc">↑ Crescente</option>
+                    <option value="desc">↓ Decrescente</option>
+                </select>
             </div>
-            
-            <button type="submit" class="btn btn-primary" style="height: 45px; padding: 0 30px;">Buscar</button>
+            <div class="form-group" style="margin:0;">
+                <label style="font-size:0.72rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Resultados por página</label>
+                <select name="per_page" style="padding:8px 10px; font-size:0.9rem;">
+                    <option value="10">10 por página</option>
+                    <option value="25">25 por página</option>
+                    <option value="50">50 por página</option>
+                    <option value="100">100 por página</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <button type="submit" class="btn btn-primary" style="display:inline-flex; align-items:center; gap:7px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                Pesquisar
+            </button>
+            <a href="/search?class={{ class_name }}" class="btn" style="background:#f1f5f9; color:#64748b; display:inline-flex; align-items:center; gap:6px;">
+                🗑 Limpar
+            </a>
         </div>
     </form>
 </div>
 
 {% if results %}
 <div class="card">
-    <p style="color: #64748b; font-weight: 600; margin-top: 0;">{{ results|length }} resultado(s) encontrado(s):</p>
-    <div style="overflow-x: auto;">
+    <p style="color:#64748b; font-weight:600; margin-top:0;">
+        <span style="color:#3b82f6; font-size:1.05rem;">{{ results|length }}</span> resultado(s) encontrado(s)
+    </p>
+    <div style="overflow-x:auto;">
         <table>
             <thead>
                 <tr>
@@ -52,9 +116,62 @@
     </div>
 </div>
 {% elif value %}
-<div class="card" style="text-align: center; padding: 40px; color: #64748b;">
-    <p style="margin: 0; font-size: 1.1rem;">Nenhum registo corresponde à pesquisa efetuada.</p>
+<div class="card" style="text-align:center; padding:50px; color:#94a3b8;">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin-bottom:12px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <p style="margin:0; font-size:1rem;">Nenhum registo corresponde à pesquisa.</p>
+    <p style="font-size:0.85rem; margin-top:6px; color:#cbd5e1;">Tenta ajustar os filtros ou usar um operador diferente.</p>
 </div>
 {% endif %}
+
+<script>
+const ATTRIBUTES = {{ attributes | tojson }};
+
+function buildFilterRow() {
+    const opts = ATTRIBUTES.map(a =>
+        `<option value="${a}">${a.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</option>`
+    ).join('');
+    const ops = [
+        ['contains','Contém'],['equals','Igual a'],['starts','Começa por'],
+        ['ends','Termina em'],['gt','Maior que'],['lt','Menor que']
+    ].map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+
+    const row = document.createElement('div');
+    row.className = 'filter-row';
+    row.style = 'display:grid; grid-template-columns:1fr 160px 2fr auto; gap:10px; align-items:end; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:10px;';
+    row.innerHTML = `
+        <div class="form-group" style="margin:0;">
+            <label style="font-size:0.72rem;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Atributo</label>
+            <select name="att[]" style="padding:8px 10px;font-size:0.9rem;">${opts}</select>
+        </div>
+        <div class="form-group" style="margin:0;">
+            <label style="font-size:0.72rem;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Operador</label>
+            <select name="op[]" style="padding:8px 10px;font-size:0.9rem;">${ops}</select>
+        </div>
+        <div class="form-group" style="margin:0;">
+            <label style="font-size:0.72rem;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Valor</label>
+            <input type="text" name="value[]" placeholder="Escreve o que procuras..." style="padding:8px 10px;font-size:0.9rem;">
+        </div>
+        <button type="button" onclick="removeFilter(this)" style="background:none;border:1px solid #fca5a5;color:#ef4444;border-radius:7px;width:36px;height:36px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;">✕</button>
+    `;
+    return row;
+}
+
+function addFilter() {
+    document.getElementById('filters-container').appendChild(buildFilterRow());
+    updateRemoveButtons();
+}
+
+function removeFilter(btn) {
+    btn.closest('.filter-row').remove();
+    updateRemoveButtons();
+}
+
+function updateRemoveButtons() {
+    const rows = document.querySelectorAll('.filter-row');
+    rows.forEach(row => {
+        row.querySelector('button').style.visibility = rows.length === 1 ? 'hidden' : 'visible';
+    });
+}
+</script>
 
 {% endblock %}
