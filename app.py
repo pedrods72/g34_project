@@ -229,38 +229,37 @@ def stats():
     )
 
 
-@appy.route('/search')
+@appy.route("/search")
 def search():
     class_name = request.args.get('class', 'Hospital')
-
-    cls = classes_map.get(class_name)
+    cls        = classes_map.get(class_name)
     if cls is None:
-        flash('Classe não encontrada.', 'error')
         return redirect('/')
-
-    attributes = [a[1:] for a in cls.att]
-
+ 
+    attributes = [a[1:] for a in cls.att[1:]]
+ 
     atts   = request.args.getlist('att[]')
     ops    = request.args.getlist('op[]')
     values = request.args.getlist('value[]')
-
+ 
     sort_by  = request.args.get('sort_by', '')
     sort_dir = request.args.get('sort_dir', 'asc')
     per_page = int(request.args.get('per_page', 10))
-
+ 
+    # compatibilidade com formulário antigo
     if not atts and request.args.get('att'):
         atts   = [request.args.get('att')]
         ops    = ['contains']
         values = [request.args.get('value', '')]
-
+ 
     results = [cls.obj[id] for id in cls.lst]
-
+ 
     for att, op, value in zip(atts, ops, values):
         if not value or att not in attributes:
             continue
         filtered = []
         for obj in results:
-            obj_val = getattr(obj, att, None)
+            obj_val = getattr(obj, '_' + att, None)
             if obj_val is None:
                 continue
             obj_str = str(obj_val).lower()
@@ -280,22 +279,21 @@ def search():
             if ok:
                 filtered.append(obj)
         results = filtered
-
+ 
     if sort_by and sort_by in attributes:
         reverse = (sort_dir == 'desc')
         results.sort(
             key=lambda obj: (
-                float(getattr(obj, sort_by))
-                if str(getattr(obj, sort_by, '')).replace('.', '', 1).isdigit()
-                else str(getattr(obj, sort_by, '')).lower()
+                float(getattr(obj, '_' + sort_by))
+                if str(getattr(obj, '_' + sort_by, '')).replace('.', '', 1).isdigit()
+                else str(getattr(obj, '_' + sort_by, '')).lower()
             ),
             reverse=reverse
         )
-
+ 
     results = results[:per_page]
-
-    return render_template(
-        'search.html',
+ 
+    return render_template('search.html',
         class_name = class_name,
         attributes = attributes,
         results    = results,
