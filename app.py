@@ -227,33 +227,83 @@ def stats():
     )
 
 
-@appy.route("/search")
+@appy.route('/search')
 def search():
-    cl_name = request.args.get("class", "Hospital")
-    att     = request.args.get("att", "")
-    value   = request.args.get("value", "")
-    cl      = classes_map[cl_name]
+    class_name = request.args.get('class', 'Hospital')
 
-    results = []
-    if att and value:
-        proto = cl.obj[cl.lst[0]] if cl.lst else None
-        if proto and '_' + att in proto.__dict__:
-            atype = type(getattr(proto, '_' + att))
-            try:
-                typed_value = atype(value)
-            except Exception:
-                typed_value = value
-            results = cl.find(typed_value, att)
+    cls = classes_map.get(class_name)
+    if cls is None:
+        flash('Classe não encontrada.', 'error')
+        return redirect('/')
 
-    return render_template("search.html",
-        class_name=cl_name,
-        att=att,
-        value=value,
-        results=results,
-        Hospital=Hospital,
-        Department=Department,
-        Device=Device,
-        attributes=[a[1:] for a in cl.att[1:]])
+    attributes = [a[1:] for a in cls.att]
+
+    atts   = request.args.getlist('att[]')
+    ops    = request.args.getlist('op[]')
+    values = request.args.getlist('value[]')
+
+    sort_by  = request.args.get('sort_by', '')
+    sort_dir = request.args.get('sort_dir', 'asc')
+    per_page = int(request.args.get('per_page', 10))
+
+    if not atts and request.args.get('att'):
+        atts   = [request.args.get('att')]
+        ops    = ['contains']
+        values = [request.args.get('value', '')]
+
+    results = [cls.obj[id] for id in cls.lst]
+
+    for att, op, value in zip(atts, ops, values):
+        if not value or att not in attributes:
+            continue
+        filtered = []
+        for obj in results:
+            obj_val = getattr(obj, att, None)
+            if obj_val is None:
+                continue
+            obj_str = str(obj_val).lower()
+            val_str = value.strip().lower()
+            match op:
+                case 'contains': ok = val_str in obj_str
+                case 'equals':   ok = obj_str == val_str
+                case 'starts':   ok = obj_str.startswith(val_str)
+                case 'ends':     ok = obj_str.endswith(val_str)
+                case 'gt':
+                    try:    ok = float(obj_val) > float(value)
+                    except: ok = obj_str > val_str
+                case 'lt':
+                    try:    ok = float(obj_val) < float(value)
+                    except: ok = obj_str < val_str
+                case _: ok = val_str in obj_str
+            if ok:
+                filtered.append(obj)
+        results = filtered
+
+    if sort_by and sort_by in attributes:
+        reverse = (sort_dir == 'desc')
+        results.sort(
+            key=lambda obj: (
+                float(getattr(obj, sort_by))
+                if str(getattr(obj, sort_by, '')).replace('.', '', 1).isdigit()
+                else str(getattr(obj, sort_by, '')).lower()
+            ),
+            reverse=reverse
+        )
+
+    results = results[:per_page]
+
+    return render_template(
+        'search.html',
+        class_name = class_name,
+        attributes = attributes,
+        results    = results,
+        att        = atts[0]   if atts   else '',
+        op         = ops[0]    if ops    else 'contains',
+        value      = values[0] if values else '',
+        sort_by    = sort_by,
+        sort_dir   = sort_dir,
+        per_page   = per_page,
+    )
 
 
 @appy.route("/", methods=["post", "get"])
