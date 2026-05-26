@@ -4,7 +4,11 @@
 <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
         <h1 style="margin: 0;">{{ header }}</h1>
-        <div>
+        <div style="display:flex; gap:10px;">
+            <a href="/search?class={{ class_name }}" class="btn" style="background:#f1f5f9; color:#334155; display:inline-flex; align-items:center; gap:6px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                Pesquisar
+            </a>
             <button class="btn btn-primary" onclick="window.location.href='/?option=insert'">Novo Registo</button>
         </div>
     </div>
