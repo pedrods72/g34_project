@@ -1,0 +1,171 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="margin: 0;">{{ header }}</h1>
+        <div style="display:flex; gap:10px;">
+            <a href="/search?class={{ class_name }}" class="btn" style="background:#f1f5f9; color:#334155; display:inline-flex; align-items:center; gap:6px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                Pesquisar
+            </a>
+            <button class="btn btn-primary" onclick="window.location.href='/?option=insert'">Novo Registo</button>
+        </div>
+    </div>
+
+    <form id="form" action="/?class={{ class_name }}&option=save" method="post">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            
+            <div class="form-group">
+                <label>ID Identificador</label>
+                <input type="text" readonly name="id" value="{{ id }}" style="background: #f1f5f9;">
+            </div>
+
+            {% for field_name, value in fields.items() %}
+                {% if field_name != 'id' %}
+                <div class="form-group">
+                    <label>{{ field_name.replace('_', ' ').title() }}</label>
+                    
+                    {% if butedit == 'disabled' %}
+                        {# MODO VISUALIZAÇÃO: Mostra o nome real em vez do ID #}
+                        {% if field_name == 'hospital_id' %}
+                            <input type="text" disabled value="{{ Hospital.obj[value].name if value in Hospital.obj else value }}">
+                        {% elif field_name == 'department_id' %}
+                            <input type="text" disabled value="{{ Hospital.obj[Department.obj[value].hospital_id].name if value in Department.obj else value }}">
+                            <input type="text" disabled value="{{ Department.obj[value].title if value in Department.obj else value }}">
+                        {% elif field_name == 'device_id' %}
+                            <input type="text" disabled value="{{ Device.obj[value].category if value in Device.obj else value }}">
+                        {% else %}
+                            <input type="text" disabled value="{{ value }}">
+                        {% endif %}
+                    
+                    {% else %}
+    {# MODO EDIÇÃO / INSERÇÃO #}
+    
+                        {% if field_name == 'hospital_id' %}
+                            <select name="hospital_id" id="select-hospital" onchange="filtrarDepartamentos()">
+                                <option value="">Selecione um Hospital</option>
+                                {% for h in hospitais_todos %}
+                                    <option value="{{ h.id }}" {{ 'selected' if h.id|string == value|string }}>{{ h.name }}</option>
+                                {% endfor %}
+                            </select>
+
+                        {% elif field_name == 'department_id' %}
+                            {# Se for Utilization, o hospital_id não existe na classe, então criamos um select auxiliar apenas para filtro #}
+                            {% if class_name == 'Utilization' %}
+                                <select id="select-hospital" style="margin-bottom: 10px; border-color: blue;" onchange="filtrarDepartamentos()">
+                                    <option value="">-- Filtrar por Hospital --</option>
+                                    {% for h in hospitais_todos %}
+                                        <option value="{{ h.id }}">{{ h.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <br>
+                            {% endif %}
+
+                            <select name="department_id" id="select-department">
+                                <option value="">Selecione um Departamento</option>
+                                {% for d in depts_todos %}
+                                    {# REMOVIDO O IF QUE ESTAVA A BLOQUEAR. O filtro agora é via JavaScript usando o data-hospital #}
+                                    <option value="{{ d.id }}" data-hospital="{{ d.hospital_id }}" {{ 'selected' if d.id|string == value|string }}>
+                                        {{ d.title }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+
+                        {% elif field_name == 'device_id' %}
+                            <select name="device_id">
+                                <option value="">Selecione um Dispositivo</option>
+                                {% for dev in devices_todos %}
+                                    <option value="{{ dev.id }}" {{ 'selected' if dev.id|string == value|string }}>{{ dev.category }} (SN: {{ dev.id }})</option>
+                                {% endfor %}
+                            </select>
+
+                        {% else %}
+                            <input type="text" {{ butedit }} id="{{ field_name }}" name="{{ field_name }}" value="{{ value }}" size="30"/>
+                        {% endif %}
+
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+            {% if butedit == 'enabled' %}
+                <button type="submit" class="btn btn-primary">Guardar Alterações</button>
+                <a href="/?option=cancel" class="btn" style="background: #e2e8f0;">Cancelar</a>
+            {% else %}
+                <a href="/?option=edit" class="btn btn-primary">Editar</a>
+                <a href="/?option=delete" class="btn" style="background: #fee2e2; color: #991b1b;">Eliminar</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<div class="card" style="margin-top: 30px;">
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <a href="/?option=first" class="btn" style="background: #f1f5f9;">⏮ Primeiro</a>
+        <a href="/?option=previous" class="btn" style="background: #f1f5f9;">Anterior</a>
+        <a href="/?option=next" class="btn" style="background: #f1f5f9;">Próximo</a>
+        <a href="/?option=last" class="btn" style="background: #f1f5f9;">Último ⏭</a>
+        <a href="/?option=list" class="btn" style="background: #3b82f6; color: white; margin-left: auto;">Ver Lista Completa</a>
+    </div>
+
+    {% if show_list %}
+    <table>
+        <thead>
+            <tr>
+                {% for title in titles if title != 'Id' %}
+                    <th>{{ title }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in list_data %}
+            <tr>
+                {% for field, val in row.items() if field != 'id' %}
+                    <td>{{ val }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<script>
+function filtrarDepartamentos() {
+    const selectHospital = document.getElementById('select-hospital');
+    const selectDept = document.getElementById('select-department');
+    
+    // Se não existirem estes elementos nesta página concreta, não faz nada
+    if (!selectHospital || !selectDept) return; 
+
+    const hospitalEscolhido = selectHospital.value;
+    const options = selectDept.getElementsByTagName('option');
+
+    for (let i = 0; i < options.length; i++) {
+        const opt = options[i];
+        
+        // A opção padrão "Selecione um Departamento" nunca é escondida
+        if (opt.value === "") continue; 
+        
+        const deptHospital = opt.getAttribute('data-hospital');
+
+        // Se nenhum hospital for selecionado ou se o departamento pertencer ao hospital escolhido
+        if (hospitalEscolhido === "" || deptHospital === hospitalEscolhido) {
+            opt.style.display = '';      // Mostra a opção
+        } else {
+            opt.style.display = 'none';  // Esconde a opção
+        }
+    }
+}
+
+// Executa automaticamente ao carregar a página para que, em modo de edição, 
+// o dropdown de departamentos já apareça devidamente filtrado se aplicável.
+document.addEventListener("DOMContentLoaded", function() {
+    filtrarDepartamentos();
+});
+</script>
+
+{% endblock %}
