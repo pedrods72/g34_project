@@ -4,117 +4,138 @@
 <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
         <h1 style="margin: 0;">{{ header }}</h1>
-        <div style="display:flex; gap:10px;">
-            <a href="/search?class={{ class_name }}" class="btn" style="background:#f1f5f9; color:#334155; display:inline-flex; align-items:center; gap:6px;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                Pesquisar
+        <div style="display: flex; gap: 10px;">
+            <a href="/search?class={{ class_name }}" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                </svg>
+                Pesquisa Avançada
             </a>
             <button class="btn btn-primary" onclick="window.location.href='/?option=insert'">Novo Registo</button>
         </div>
     </div>
 
     <form id="form" action="/?class={{ class_name }}&option=save" method="post">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; min-height: 280px; align-content: start;">
             
-            <div class="form-group">
-                <label>ID Identificador</label>
-                <input type="text" readonly name="id" value="{{ id }}" style="background: #f1f5f9;">
+            <div class="form-group" style="display: flex; flex-direction: column;">
+                <label style="font-weight: 600; margin-bottom: 8px; color: #475569; font-size: 0.9rem;">ID Identificador</label>
+                <input type="text" readonly name="id" value="{{ id }}" style="background: #f1f5f9; height: 42px; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; box-sizing: border-box; width: 100%; font-weight: 600;">
             </div>
 
             {% for field_name, value in fields.items() %}
                 {% if field_name != 'id' %}
-                <div class="form-group">
-                    <label>{{ field_name.replace('_', ' ').title() }}</label>
+                <div class="form-group" style="display: flex; flex-direction: column;">
+                    <label style="font-weight: 600; margin-bottom: 8px; color: #475569; font-size: 0.9rem;">{{ field_name.replace('_', ' ').title() }}</label>
                     
+                    {% set input_style = "height: 42px; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; box-sizing: border-box; width: 100%; font-size: 0.95rem;" %}
+
                     {% if butedit == 'disabled' %}
                         {# MODO VISUALIZAÇÃO: Mostra o nome real em vez do ID #}
                         {% if field_name == 'hospital_id' %}
-                            <input type="text" disabled value="{{ Hospital.obj[value].name if value in Hospital.obj else value }}">
+                            <input type="text" disabled value="{{ Hospital.obj[value].name if value in Hospital.obj else value }}" style="{{ input_style }}">
                         {% elif field_name == 'department_id' %}
-                            <input type="text" disabled value="{{ Hospital.obj[Department.obj[value].hospital_id].name if value in Department.obj else value }}">
-                            <input type="text" disabled value="{{ Department.obj[value].title if value in Department.obj else value }}">
+                            {# Coloca o Hospital e o Departamento bloqueados lado a lado, repartindo o espaço #}
+                            <div style="display: flex; gap: 10px; width: 100%;">
+                                <input type="text" disabled value="{{ Hospital.obj[Department.obj[value].hospital_id].name if value in Department.obj else 'Hospital s/ Nome' }}" style="{{ input_style }} flex: 1;">
+                                <input type="text" disabled value="{{ Department.obj[value].title if value in Department.obj else value }}" style="{{ input_style }} flex: 1;">
+                            </div>
                         {% elif field_name == 'device_id' %}
-                            <input type="text" disabled value="{{ Device.obj[value].category if value in Device.obj else value }}">
+                            <input type="text" disabled value="{{ Device.obj[value].category if value in Device.obj else value }}" style="{{ input_style }}">
                         {% else %}
-                            <input type="text" disabled value="{{ value }}">
+                            <input type="text" disabled value="{{ value }}" style="{{ input_style }}">
                         {% endif %}
-                    
                     {% else %}
     {# MODO EDIÇÃO / INSERÇÃO #}
     
                         {% if field_name == 'hospital_id' %}
-                            <select name="hospital_id" id="select-hospital" onchange="filtrarDepartamentos()">
+                            <select name="hospital_id" id="select-hospital" onchange="filtrarDepartamentos()" required style="{{ input_style }}">
                                 <option value="">Selecione um Hospital</option>
                                 {% for h in hospitais_todos %}
                                     <option value="{{ h.id }}" {{ 'selected' if h.id|string == value|string }}>{{ h.name }}</option>
                                 {% endfor %}
                             </select>
-
                         {% elif field_name == 'department_id' %}
-                            {# Se for Utilization, o hospital_id não existe na classe, então criamos um select auxiliar apenas para filtro #}
-                            {% if class_name == 'Utilization' %}
-                                <select id="select-hospital" style="margin-bottom: 10px; border-color: blue;" onchange="filtrarDepartamentos()">
-                                    <option value="">-- Filtrar por Hospital --</option>
-                                    {% for h in hospitais_todos %}
-                                        <option value="{{ h.id }}">{{ h.name }}</option>
+                            <div style="display: flex; flex-direction: column; width: 100%; gap: 8px;">
+                                {% if class_name == 'Utilization' %}
+                                    <select id="select-hospital-filtro" style="{{ input_style }} border-color: #3b82f6;" onchange="filtrarDepartamentos()">
+                                        <option value="">-- Filtrar por Hospital --</option>
+                                        {% for h in hospitais_todos %}
+                                            <option value="{{ h.id }}">{{ h.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% endif %}
+                                <select name="department_id" id="select-department" required style="{{ input_style }}">
+                                    <option value="">Selecione um Departamento</option>
+                                    {% for d in depts_todos %}
+                                        <option value="{{ d.id }}" data-hospital="{{ d.hospital_id }}" {{ 'selected' if d.id|string == value|string }}>
+                                            {{ d.title }}
+                                        </option>
                                     {% endfor %}
                                 </select>
-                                <br>
-                            {% endif %}
-
-                            <select name="department_id" id="select-department">
-                                <option value="">Selecione um Departamento</option>
-                                {% for d in depts_todos %}
-                                    {# REMOVIDO O IF QUE ESTAVA A BLOQUEAR. O filtro agora é via JavaScript usando o data-hospital #}
-                                    <option value="{{ d.id }}" data-hospital="{{ d.hospital_id }}" {{ 'selected' if d.id|string == value|string }}>
-                                        {{ d.title }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-
+                            </div>
                         {% elif field_name == 'device_id' %}
-                            <select name="device_id">
+                            <select name="device_id" required style="{{ input_style }}">
                                 <option value="">Selecione um Dispositivo</option>
                                 {% for dev in devices_todos %}
                                     <option value="{{ dev.id }}" {{ 'selected' if dev.id|string == value|string }}>{{ dev.category }} (SN: {{ dev.id }})</option>
                                 {% endfor %}
                             </select>
-
                         {% else %}
-                            <input type="text" {{ butedit }} id="{{ field_name }}" name="{{ field_name }}" value="{{ value }}" size="30"/>
+                            {% if field_name == 'utilization_date' %}
+                                <input type="text" id="{{ field_name }}" name="{{ field_name }}" value="{{ value }}" maxlength="10" placeholder="AAAA-MM-DD" oninput="mascaraData(this)" required style="{{ input_style }} font-family: monospace;"/>
+                            {% elif 'cost' in field_name or 'price' in field_name or 'value' in field_name %}
+                                <input type="number" step="0.01" id="{{ field_name }}" name="{{ field_name }}" value="{{ value }}" required style="{{ input_style }}"/>
+                            {% else %}
+                                <input type="text" id="{{ field_name }}" name="{{ field_name }}" value="{{ value }}" required style="{{ input_style }}"/>
+                            {% endif %}
                         {% endif %}
-
                     {% endif %}
                 </div>
                 {% endif %}
             {% endfor %}
         </div>
 
-        <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-            {% if butedit == 'enabled' %}
-                <button type="submit" class="btn btn-primary">Guardar Alterações</button>
-                <a href="/?option=cancel" class="btn" style="background: #e2e8f0;">Cancelar</a>
-            {% else %}
-                <a href="/?option=edit" class="btn btn-primary">Editar</a>
-                <a href="/?option=delete" class="btn" style="background: #fee2e2; color: #991b1b;">Eliminar</a>
+        <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                {% if butedit == 'enabled' %}
+                    <button type="submit" class="btn btn-primary">Guardar Alterações</button>
+                    <button type="reset" class="btn" style="background: #f1f5f9; color: #334155;">Limpar Formulário</button>
+                    <a href="/?option=cancel" class="btn" style="background: #e2e8f0;">Cancelar</a>
+                {% else %}
+                    <a href="/?option=edit" class="btn btn-primary">Editar</a>
+                    <a href="/?option=delete" class="btn" style="background: #fee2e2; color: #991b1b;" onclick="return confirmarEliminacao();">Eliminar</a>
+                {% endif %}
+            </div>
+            
+            {% if butedit != 'enabled' %}
+            <div style="display: flex; gap: 6px;">
+                <a href="/?option=first" class="btn" style="background: #f1f5f9;">⏮ Primeiro</a>
+                <a href="/?option=previous" class="btn" style="background: #f1f5f9;">Anterior</a>
+                <a href="/?option=next" class="btn" style="background: #f1f5f9;">Próximo</a>
+                <a href="/?option=last" class="btn" style="background: #f1f5f9;">Último ⏭</a>
+            </div>
             {% endif %}
         </div>
     </form>
 </div>
 
 <div class="card" style="margin-top: 30px;">
-    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <a href="/?option=first" class="btn" style="background: #f1f5f9;">⏮ Primeiro</a>
-        <a href="/?option=previous" class="btn" style="background: #f1f5f9;">Anterior</a>
-        <a href="/?option=next" class="btn" style="background: #f1f5f9;">Próximo</a>
-        <a href="/?option=last" class="btn" style="background: #f1f5f9;">Último ⏭</a>
-        <a href="/?option=list" class="btn" style="background: #3b82f6; color: white; margin-left: auto;">Ver Lista Completa</a>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        {% if show_list %}
+            <a href="/?class={{ class_name }}" class="btn" style="background: #64748b; color: white;">Fechar Lista</a>
+            <input type="text" id="input-busca-rapida" onkeyup="buscaRapidaTabela()" placeholder="Filtrar nesta tabela..." style="width: 250px; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; margin: 0;">
+        {% else %}
+            <a href="/?option=list" class="btn" style="background: #3b82f6; color: white;">Ver Lista Completa</a>
+        {% endif %}
     </div>
 
     {% if show_list %}
-    <table>
+    <table id="tabela-dados">
         <thead>
             <tr>
+                <th>ID</th>
                 {% for title in titles if title != 'Id' %}
                     <th>{{ title }}</th>
                 {% endfor %}
@@ -123,6 +144,7 @@
         <tbody>
             {% for row in list_data %}
             <tr>
+                <td style="font-weight: bold; color: #3b82f6;">#{{ row['id'] }}</td>
                 {% for field, val in row.items() if field != 'id' %}
                     <td>{{ val }}</td>
                 {% endfor %}
@@ -130,41 +152,165 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <div id="paginacao-container" style="display: flex; gap: 5px; justify-content: center; align-items: center; margin-top: 20px;"></div>
     {% endif %}
 </div>
 
 <script>
 function filtrarDepartamentos() {
-    const selectHospital = document.getElementById('select-hospital');
+    const selectHospital = document.getElementById('select-hospital') || document.getElementById('select-hospital-filtro');
     const selectDept = document.getElementById('select-department');
     
-    // Se não existirem estes elementos nesta página concreta, não faz nada
     if (!selectHospital || !selectDept) return; 
 
     const hospitalEscolhido = selectHospital.value;
+    const deptSelecionadoAtualmente = selectDept.querySelector('option:checked');
+    
+    if (deptSelecionadoAtualmente && deptSelecionadoAtualmente.value !== "") {
+        const hospitalDoDeptAtual = deptSelecionadoAtualmente.getAttribute('data-hospital');
+        if (hospitalEscolhido !== "" && hospitalDoDeptAtual !== hospitalEscolhido) {
+            selectDept.value = ""; 
+        }
+    }
+    
     const options = selectDept.getElementsByTagName('option');
-
     for (let i = 0; i < options.length; i++) {
         const opt = options[i];
-        
-        // A opção padrão "Selecione um Departamento" nunca é escondida
         if (opt.value === "") continue; 
         
         const deptHospital = opt.getAttribute('data-hospital');
-
-        // Se nenhum hospital for selecionado ou se o departamento pertencer ao hospital escolhido
-        if (hospitalEscolhido === "" || deptHospital === hospitalEscolhido) {
-            opt.style.display = '';      // Mostra a opção
-        } else {
-            opt.style.display = 'none';  // Esconde a opção
-        }
+        opt.style.display = (hospitalEscolhido === "" || deptHospital === hospitalEscolhido) ? '' : 'none';
     }
 }
 
-// Executa automaticamente ao carregar a página para que, em modo de edição, 
-// o dropdown de departamentos já apareça devidamente filtrado se aplicável.
+function mascaraData(input) {
+    let v = input.value.replace(/\D/g, ""); 
+    if (v.length > 4) v = v.substring(0, 4) + "-" + v.substring(4);
+    if (v.length > 7) v = v.substring(0, 7) + "-" + v.substring(7, 9);
+    input.value = v;
+}
+
+function buscaRapidaTabela() {
+    const input = document.getElementById("input-busca-rapida");
+    let filter = input.value.trim().toUpperCase();
+    const table = document.getElementById("tabela-dados");
+    
+    if (!table) return;
+    
+    const tr = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+    const procurarPorID = filter.startsWith("#");
+    if (procurarPorID) filter = filter.substring(1);
+
+    for (let i = 0; i < tr.length; i++) {
+        if (procurarPorID) {
+            let idTd = tr[i].getElementsByTagName("td")[0];
+            let idValue = idTd ? (idTd.textContent || idTd.innerText).replace("#", "").trim() : "";
+            
+            if (idValue === filter || idValue.startsWith(filter)) {
+                tr[i].classList.remove("filtrado-escondido");
+            } else {
+                tr[i].classList.add("filtrado-escondido");
+            }
+        } else {
+            let txtValue = tr[i].textContent || tr[i].innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                tr[i].classList.remove("filtrado-escondido");
+            } else {
+                tr[i].classList.add("filtrado-escondido");
+            }
+        }
+    }
+    paginarTabela();
+}
+
+const linhasPorPagina = 25;
+let paginaAtual = 1;
+
+function paginarTabela() {
+    const table = document.getElementById("tabela-dados");
+    if (!table) return;
+    
+    const tbody = table.getElementsByTagName("tbody")[0];
+    const todasAsLinhas = tbody.getElementsByTagName("tr");
+    const linhasValidas = Array.from(todasAsLinhas).filter(tr => !tr.classList.contains("filtrado-escondido"));
+    const totalPaginas = Math.ceil(linhasValidas.length / linhasPorPagina);
+    const container = document.getElementById("paginacao-container");
+    
+    if (!container) return;
+    container.innerHTML = "";
+    
+    for (let i = 0; i < todasAsLinhas.length; i++) {
+        if (todasAsLinhas[i].classList.contains("filtrado-escondido")) {
+            todasAsLinhas[i].style.display = "none";
+        }
+    }
+
+    if (totalPaginas <= 1) {
+        linhasValidas.forEach(tr => tr.style.display = "");
+        return; 
+    }
+
+    function renderizarNavegacao(numPagina) {
+        paginaAtual = numPagina;
+        const inicio = (numPagina - 1) * linhasPorPagina;
+        const fim = inicio + linhasPorPagina;
+
+        linhasValidas.forEach((tr, index) => {
+            tr.style.display = (index >= inicio && index < fim) ? "" : "none";
+        });
+
+        container.innerHTML = "";
+
+        function criarBotao(texto, destino, desativado = false, ativo = false) {
+            const btn = document.createElement("button");
+            btn.innerText = texto;
+            btn.className = "btn";
+            btn.style.padding = "6px 12px";
+            btn.style.cursor = desativado ? "default" : "pointer";
+            btn.disabled = desativado;
+            
+            if (ativo) {
+                btn.style.background = "#3b82f6";
+                btn.style.color = "white";
+            } else if (desativado) {
+                btn.style.background = "#f8fafc";
+                btn.style.color = "#cbd5e1";
+            } else {
+                btn.style.background = "#f1f5f9";
+                btn.style.color = "#334155";
+            }
+
+            if (!desativado && !ativo) {
+                btn.onclick = function() { renderizarNavegacao(destino); };
+            }
+            container.appendChild(btn);
+        }
+
+        criarBotao("|<<", 1, paginaAtual === 1);
+        criarBotao("<", paginaAtual - 1, paginaAtual === 1);
+
+        let inicioJanela = Math.max(1, paginaAtual - 2);
+        let fimJanela = Math.min(totalPaginas, paginaAtual + 2);
+
+        for (let i = inicioJanela; i <= fimJanela; i++) {
+            criarBotao(i, i, false, i === paginaAtual);
+        }
+
+        criarBotao(">", paginaAtual + 1, paginaAtual === totalPaginas);
+        criarBotao(">>|", totalPaginas, paginaAtual === totalPaginas);
+    }
+
+    renderizarNavegacao(1);
+}
+
+function confirmarEliminacao() {
+    return confirm("Tem a certeza absoluta que deseja eliminar este registo? Esta ação não pode ser revertida.");
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     filtrarDepartamentos();
+    paginarTabela();
 });
 </script>
 
