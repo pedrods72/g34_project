@@ -6,7 +6,7 @@ Created on Sat Apr 25 17:18:54 2026
 """
 # interface do site onde há display dos nossos dados
 
-from flask import Flask, render_template, request, session, flash
+from flask import Flask, render_template, request, session, flash, redirect
 import sqlite3
 import os
 from classes.hospital import Hospital
@@ -15,7 +15,9 @@ from classes.device import Device
 from classes.utilization import Utilization
 
 appy = Flask(__name__)
+appy.config["TEMPLATES_AUTO_RELOAD"] = True  # ← linha 18
 appy.secret_key = 'CHAVE_SECRETA_HOSPITAL'
+appy.jinja_env.globals['getattr'] = getattr
 
 # assim o Flask procura a base de dados exatamente na mesma pasta onde
 # o ficheiro app.py está guardado, independentemente do terminal.
