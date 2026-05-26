@@ -21,11 +21,11 @@
     </div>
     <div class="card" style="text-align: center; padding: 20px;">
         <span style="font-size: 0.85rem; text-transform: uppercase; color: #64748b; font-weight: 600;">Custo Acumulado</span>
-        <h2 style="font-size: 2rem; margin: 10px 0 0 0; color: #ef4444;">{{ total_amount_fmt }}€</h2>
+        <h2 style="font-size: 2rem; margin: 10px 0 0 0; color: #ef4444;">{{ total_amount_fmt }}</h2>
     </div>
     <div class="card" style="text-align: center; padding: 20px;">
         <span style="font-size: 0.85rem; text-transform: uppercase; color: #64748b; font-weight: 600;">Média por Utilização</span>
-        <h2 style="font-size: 2rem; margin: 10px 0 0 0; color: #10b981;">{{ avg_amount }}</h2>
+        <h2 style="font-size: 2rem; margin: 10px 0 0 0; color: #10b981;">{{ avg_amount }}€</h2>
     </div>
     <div class="card" style="text-align: center; padding: 20px;">
         <span style="font-size: 0.85rem; text-transform: uppercase; color: #64748b; font-weight: 600;">Utilizações Totais</span>
@@ -36,22 +36,17 @@
 <div style="display: flex; flex-direction: column; gap: 30px;">
     
     <div class="card">
-        <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e293b;">Distribuição de Dispositivos por Categoria</h3>
-        <div id="chart_devices" style="width: 100%; height: 400px;"></div>
+        <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e293b;">Valor gasto por dispositivo</h3>
+        <div id="chart_devices" style="width: 100%; height: 450px;"></div>
     </div>
 
     <div class="card">
-        <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e293b;">Evolução Anual de Gastos</h3>
-        <div id="chart_anual" style="width: 100%; height: 400px;"></div>
-    </div>
-
-    <div class="card">
-        <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e293b;">Top Hospitais com Maior Atividade</h3>
+        <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e293b;">Hospitais com Maior Atividade</h3>
         <div id="chart_hospitais" style="width: 100%; height: 450px;"></div>
     </div>
 
     <div class="card">
-        <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e293b;">Valores de utilização por mês</h3>
+        <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e293b;">Valores gastos mensalmente, entre jan. 2020 e fev. 2026</h3>
         <div id="chart_trends" style="width: 100%; height: 400px;"></div>
     </div>
 
@@ -91,62 +86,96 @@
 function toggleTable() {
     const container = document.getElementById('hosp-container');
     const btn = document.getElementById('btn-show-more');
-    
-    // Verificamos se está colapsado (415px) ou expandido
     if (container.style.maxHeight === '415px' || container.style.maxHeight === '') {
-        container.style.maxHeight = '2015px'; // Um valor alto o suficiente para mostrar mais coisas
+        container.style.maxHeight = '2015px';
         btn.innerText = 'Mostrar Menos';
     } else {
         container.style.maxHeight = '415px';
         btn.innerText = 'Mostrar Mais';
-        // Scroll suave de volta para o topo da tabela ao fechar
         window.scrollTo({ top: container.offsetTop - 100, behavior: 'smooth' });
     }
 }
-    const BLUE = '#3b82f6';
-    const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-    // Dados injetados pelo Flask (Mantém as variáveis do app.py)
-    const topDeptsLabels = {{ top_depts_labels | tojson if top_depts_labels else '[]' }};
-    const topDeptsHospitals = {{ top_depts_hospitals | tojson if top_depts_hospitals else '[]' }};
-    const topDeptsValues = {{ top_depts_values | tojson if top_depts_values else '[]' }};
-    const deviceLabels = {{ device_labels|tojson|safe if device_labels else '[]' }};
-    const deviceValues = {{ device_values|tojson|safe if device_values else '[]' }};
-    const anualLabels = {{ anual_labels|tojson|safe if anual_labels else '[]' }};
-    const anualValues = {{ anual_values|tojson|safe if anual_values else '[]' }};
-    const hospLabels = {{ hosp_labels|tojson|safe if hosp_labels else '[]' }};
-    const hospValues = {{ hosp_values|tojson|safe if hosp_values else '[]' }};
-    const rawTrends = {{ trends | tojson if trends else '[]' }};
+function calcularMediana(arr) {
+    if (arr.length === 0) return 0;
+    const sorted = [...arr].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
 
-    if (deviceLabels.length > 0) {
-        Plotly.newPlot('chart_devices', [{
-            type: 'pie', labels: deviceLabels, values: deviceValues,
-            marker: { colors: COLORS }, hole: 0.4
-        }], { margin: { t: 10, b: 10, l: 10, r: 10 } }, { responsive: true });
-    }
+const BLUE = '#3b82f6';
+const GRAY = '#808080';
+const PURPLE = '#8b5cf6';
 
-    if (anualLabels.length > 0) {
-        Plotly.newPlot('chart_anual', [{
-            type: 'scatter', mode: 'lines+markers', x: anualLabels, y: anualValues,
-            line: { color: BLUE, width: 3 }, fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.08)'
-        }], { margin: { t: 10, b: 40, l: 60, r: 20 } }, { responsive: true });
-    }
+// Dados injetados pelo Flask
+const topDeptsLabels = {{ top_depts_labels | tojson if top_depts_labels else '[]' }};
+const topDeptsHospitals = {{ top_depts_hospitals | tojson if top_depts_hospitals else '[]' }};
+const topDeptsValues = {{ top_depts_values | tojson if top_depts_values else '[]' }};
+const pareto = {{ pareto | tojson if pareto else '[]' }};
+const deviceLabels = pareto.map(d => d.category);
+const deviceValues = pareto.map(d => Math.round(d.cost / 1000) * 1000);
+const hospLabels = {{ hosp_labels|tojson|safe if hosp_labels else '[]' }};
+const hospValues = {{ hosp_values|tojson|safe if hosp_values else '[]' }};
+const rawTrends = {{ trends | tojson if trends else '[]' }};
 
-    if (hospLabels.length > 0) {
-        Plotly.newPlot('chart_hospitais', [{
-            type: 'bar', orientation: 'h', x: hospValues, y: hospLabels,
-            marker: { color: BLUE }
-        }], { margin: { t: 10, b: 40, l: 180, r: 20 }, yaxis: { autorange: 'reversed' } }, { responsive: true });
-    }
-    // Tendências Mensais
-    if (document.getElementById('chart_trends') && rawTrends.length > 0) {
-        const tLabels = rawTrends.map(t => t.period);
-        const tValues = rawTrends.map(t => t.total);
-        Plotly.newPlot('chart_trends', [{
-            x: tLabels, y: tValues, type: 'scatter', mode: 'lines+markers',
-            line: { color: BLUE, width: 3 }, fill: 'tozeroy'
-        }], { margin: { t: 10, b: 40, l: 60, r: 20 } }, { responsive: true });
-    }
+// --- 1. Gráfico de Dispositivos (Média vs Mediana) ---
+if (deviceLabels.length > 0) {
+    const mediadevices = deviceValues.reduce((a, b) => a + b, 0) / deviceValues.length;
+    const medianadevices = calcularMediana(deviceValues);
+    const deviceColors = deviceValues.map(v => v > mediadevices ? 'rgba(239,68,68,0.6)' : 'rgba(16,185,129,0.6)');
+    
+    Plotly.newPlot('chart_devices', 
+    [{
+        type: 'bar', orientation: 'v', name: 'Valor Gasto',
+        x: deviceLabels, y: deviceValues, marker: { color: deviceColors }
+    }],
+    {
+        margin: { t: 20, b: 80, l: 60, r: 150 },
+        shapes: [
+            { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: mediadevices, y1: mediadevices, line: { color: GRAY, width: 2, dash: 'dash' } },
+        ],
+        annotations: [
+            { xref: 'paper', yref: 'y', x: 1.01, y: mediadevices,xanchor: 'left', yanchor: 'top', text: 'Média: ' + (mediadevices / 1000000).toFixed(2) + 'M', showarrow: false, font: { color: GRAY, size: 11 } },
+            { xref: 'paper', yref: 'y', x: 1.01, y: mediadevices, xanchor: 'left', yanchor: 'bottom', text: 'Mediana: ' + (medianadevices / 1000000).toFixed(2) + 'M', showarrow: false, font: { color: PURPLE, size: 11 } }
+        ]
+    }, { responsive: true });
+}
+
+
+// --- 2. Gráfico de Hospitais ---
+if (hospLabels.length > 0) {
+    Plotly.newPlot('chart_hospitais', [{
+        type: 'bar', orientation: 'h', x: hospValues, y: hospLabels, marker: { color: BLUE }
+    }], { margin: { t: 20, b: 40, l: 180, r: 20 }, yaxis: { autorange: 'reversed' } }, { responsive: true });
+}
+
+// --- 3. Tendências Mensais (Zonas Coloridas + Média/Mediana) ---
+if (document.getElementById('chart_trends') && rawTrends.length > 0) {
+    const tLabels = rawTrends.map(t => t.period);
+    const tValues = rawTrends.map(t => t.total);
+    
+    const mediatrends = tValues.reduce((a, b) => a + b, 0) / tValues.length;
+    const medianatrends = calcularMediana(tValues);
+    
+    const mediatrendsArray = tValues.map(() => Math.round(mediatrends / 1000) * 1000);
+    const medianatrendsArray = tValues.map(() => Math.round(medianatrends / 1000) * 1000);
+
+    Plotly.newPlot('chart_trends', [
+        { x: tLabels, y: tValues, type: 'scatter', mode: 'lines+markers', name: 'Valor Mensal', line: { color: BLUE, width: 3 } },
+        { x: tLabels, y: mediatrendsArray, type: 'scatter', mode: 'lines', name: 'Média Mensal', line: { color: GRAY, width: 2, dash: 'dash' } },
+        { x: tLabels, y: medianatrendsArray, type: 'scatter', mode: 'lines', name: 'Mediana Mensal', line: { color: PURPLE, width: 2, dash: 'dot' } }
+    ], {
+        margin: { t: 20, b: 40, l: 60, r: 20 },
+        shapes: [
+            { type: 'rect', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: mediatrends, y1: Math.max(...tValues) * 1.05, fillcolor: 'rgba(239,68,68,0.08)', line: { width: 0 } },
+            { type: 'rect', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: Math.min(...tValues) * 0.95, y1: mediatrends, fillcolor: 'rgba(16,185,129,0.08)', line: { width: 0 } }
+        ],
+        annotations: [
+            { xref: 'paper', yref: 'y', x: 1.01, y: mediatrends,xanchor: 'left', yanchor: 'top', text: 'Média: ' + (mediatrends / 1000).toFixed(2) + 'k', showarrow: false, font: { color: GRAY, size: 11 } },
+            { xref: 'paper', yref: 'y', x: 1.01, y: medianatrends,xanchor: 'left', yanchor: 'bottom', text: 'Mediana: ' + (medianatrends / 1000).toFixed(2) + 'k', showarrow: false, font: { color: PURPLE, size: 11 } }
+        ]
+    }, { responsive: true });
+}
 </script>
 
 {% endblock %}
