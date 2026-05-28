@@ -98,23 +98,23 @@
         </div>
 
         <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
+            <div style="display: flex; gap: 10px; align-items: center;">
                 {% if butedit == 'enabled' %}
-                    <button type="submit" class="btn btn-primary">Guardar Alterações</button>
-                    <button type="reset" class="btn" style="background: #f1f5f9; color: #334155;">Limpar Formulário</button>
-                    <a href="/?option=cancel" class="btn" style="background: #e2e8f0;">Cancelar</a>
+                    <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; height: 42px;">Guardar Alterações</button>
+                    <button type="reset" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px;">Limpar Formulário</button>
+                    <a href="/?option=cancel" class="btn" style="background: #e2e8f0; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Cancelar</a>
                 {% else %}
-                    <a href="/?option=edit" class="btn btn-primary">Editar</a>
-                    <a href="/?option=delete" class="btn" style="background: #fee2e2; color: #991b1b;" onclick="return confirmarEliminacao();">Eliminar</a>
+                    <a href="/?option=edit" class="btn btn-primary" style="display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Editar</a>
+                    <a href="/?option=delete" class="btn" style="background: #fee2e2; color: #991b1b; display: inline-flex; align-items: center; height: 42px; text-decoration: none;" onclick="return confirmarEliminacao();">Eliminar</a>
                 {% endif %}
             </div>
             
             {% if butedit != 'enabled' %}
-            <div style="display: flex; gap: 6px;">
-                <a href="/?option=first" class="btn" style="background: #f1f5f9;">⏮ Primeiro</a>
-                <a href="/?option=previous" class="btn" style="background: #f1f5f9;">Anterior</a>
-                <a href="/?option=next" class="btn" style="background: #f1f5f9;">Próximo</a>
-                <a href="/?option=last" class="btn" style="background: #f1f5f9;">Último ⏭</a>
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <a href="/?option=first" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">⏮ Primeiro</a>
+                <a href="/?option=previous" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Anterior</a>
+                <a href="/?option=next" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Próximo</a>
+                <a href="/?option=last" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Último ⏭</a>
             </div>
             {% endif %}
         </div>
