@@ -341,7 +341,7 @@ def search():
 
 
 
-@appy.route("/", methods=["post", "get"])
+@appy.route("/dashboard", methods=["post", "get"])
 def index():
     global prev_option
 
@@ -453,6 +453,9 @@ def index():
                            list_data=list_data,
                            ulogin=session.get("user"),
                            user_group=user_group)
+@appy.route("/")
+def home():
+    return render_template("home.html")
 
 
 if __name__ == "__main__":
