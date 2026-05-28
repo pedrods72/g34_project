@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Hospital Management System</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/main.css') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+          rel="stylesheet">
+</head>
+
+<body class="landing-page">
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <h1>Hospital Management System</h1>
+
+        <p>
+            Plataforma inteligente para gestão hospitalar,
+            departamentos, dispositivos médicos e análise de
+            utilização clínica em tempo real.
+        </p>
+
+        <a href="{{ url_for('login') }}"
+           class="btn btn-primary hero-btn">
+            Iniciar Sessão
+        </a>
+
+    </div>
+
+    <div class="hero-image">
+
+        <img src="{{ url_for('static',
+        filename='images/medical-hero.jpg') }}"
+        alt="Medical Dashboard">
+
+    </div>
+
+</section>
+
+</body>
+</html>
