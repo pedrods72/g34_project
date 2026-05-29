@@ -1,16 +1,25 @@
 S# Módulo de análise estatística de dados hospitalares - Versão inicial
 import pandas as pd
 import plotly.express as px
-import sqlite3
-import os
 
-# 1. Configurar o caminho para a base de dados
-base_dir = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.join(base_dir, 'dados', 'HospitalData.db')
+def criar_grafico_gastos_plotly(dados_gastos):
+    if not dados_gastos:
+        return "<p>Sem dados para gerar gráfico.</p>"
+    df = pd.DataFrame(dados_gastos)
+    fig = px.bar(df, x='category', y='cost',
+                 title="Custos por Categoria de Dispositivo",
+                 labels={'category': 'Categoria', 'cost': 'Custo Total (€)'},
+                 color='cost', color_continuous_scale='Blues')
+    return fig.to_html(full_html=False)
 
-def carregar_dados(tabela):
-    """Função para ler qualquer tabela da base de dados usando Pandas"""
-    conn = sqlite3.connect(db_path)
-    df = pd.read_sql_query(f"SELECT * FROM {tabela}", conn)
-    conn.close()
-    return df
+def criar_grafico_tendencias(dados_trends):
+    """Transforma as tendências mensais do app.py num gráfico de linhas."""
+    if not dados_trends:
+        return ""
+        
+    df = pd.DataFrame(dados_trends)
+    fig = px.line(df, x='period', y='total', 
+                  title="Evolução Mensal de Utilização",
+                  markers=True)
+    
+    return fig.to_html(full_html=False)
