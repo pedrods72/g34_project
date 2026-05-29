@@ -13,7 +13,6 @@ def criar_grafico_gastos_plotly(dados_gastos):
     return fig.to_html(full_html=False)
 
 def criar_grafico_tendencias(dados_trends):
-    """Transforma as tendências mensais do app.py num gráfico de linhas."""
     if not dados_trends:
         return ""
         
@@ -23,3 +22,26 @@ def criar_grafico_tendencias(dados_trends):
                   markers=True)
     
     return fig.to_html(full_html=False)
+def grafico_rentabilidade_dispositivos(Utilization, Device):
+    df_util = pd.DataFrame([{'dev_id': u.device_id, 'amt': u.amount} for u in Utilization.obj.values()])
+    df_dev = pd.DataFrame([{'id': d.id, 'cat': d.category} for d in Device.obj.values()])
+  
+    df = pd.merge(df_util, df_dev, left_on='dev_id', right_on='id')
+    resumo = df.groupby('cat').agg({'amt': 'sum', 'dev_id': 'count'}).reset_index()
+    resumo.columns = ['Categoria', 'Custo_Total', 'Frequencia']
+    
+    fig = px.scatter(resumo, x="Frequencia", y="Custo_Total", size="Custo_Total", 
+                     color="Categoria", hover_name="Categoria",
+                     title="Análise de Rentabilidade: Uso vs Investimento")
+    
+    return fig.to_html(full_html=False)
+
+def detetar_alertas_gastos(efficiency_data):
+    if not efficiency_data:
+        return []
+    df = pd.DataFrame(efficiency_data)
+    limite = df['total_spend'].mean() * 1.2
+    alertas = df[df['total_spend'] > limite]
+    return alertas[['name', 'total_spend']].to_dict(orient='records')
+
+
