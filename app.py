@@ -271,6 +271,7 @@ def stats():
     trends     = tendencias_mensais()
     pareto     = gastos_dispositivos()
     efficiency = eficiencia_hospitais()
+    custo_volume = analise_custo_volume_hospitais() 
 
     return render_template("stats.html",
         ulogin=session.get('user'),
@@ -284,6 +285,7 @@ def stats():
         trends=trends,
         pareto=pareto,
         efficiency=efficiency,
+        custo_volume=custo_volume,
         # gráficos
         top_depts_labels=top_depts_labels,
         top_depts_hospitals=top_depts_hospitals,
