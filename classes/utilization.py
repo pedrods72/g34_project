@@ -16,10 +16,9 @@ class Utilization(Gclass):
     
 
     att = ['_id', '_department_id', '_device_id', '_utilization_date', '_amount']
-    
     header = 'Utilizations'
-    
-    des = ['Id', 'Department Id', 'Device Id', 'Utilization Date', 'Amount']
+    # Alterei o 'Id' do departamento e dispositivo para o nome legível
+    des = ['Id', 'Department Name', 'Device Name', 'Utilization Date', 'Amount']
     
 
     def __init__(self, id, department_id, device_id, utilization_date, amount):
