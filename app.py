@@ -338,6 +338,15 @@ def search():
         sort_dir=sort_dir,
         per_page=per_page,
     )
+    match att:
+        case 'department_name':
+            obj_val = obj.department_name
+        case 'device_name':
+            obj_val = obj.device_name
+        case 'hospital_name':
+            obj_val = obj.hospital_name
+        case _:
+            obj_val = getattr(obj, '_' + att, None)
 
 
 
