@@ -142,7 +142,7 @@
             </thead>
             <tbody>
                 {% for row in list_data %}
-                    <tr onclick="carregarRaioXHospital({{ row['id'] }}, this)" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='transparent'">
+                    <tr {% if class_name == 'Hospital' %}onclick="carregarRaioXHospital({{ row['id'] }}, this)" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='transparent'"{% endif %}>
                         
                         <td style="font-weight: bold; color: #3b82f6;">#{{ row['id'] }}</td>
                         
@@ -151,10 +151,14 @@
                         {% endfor %}
                         
                         <td>
+                            {% if class_name == 'Hospital' %}
                             <span style="color: #3b82f6; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
                                 Raio-X 
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                             </span>
+                            {% else %}
+                            <span style="color: #cbd5e1; font-size: 0.82rem;">—</span>
+                            {% endif %}
                         </td>
                     </tr> 
                 {% endfor %}
