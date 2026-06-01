@@ -266,88 +266,57 @@ def stats():
 @appy.route("/search")
 def search():
     class_name = request.args.get('class', 'Hospital')
-    cls        = classes_map.get(class_name)
-    if cls is None:
-        return redirect('/')
+    cls = classes_map.get(class_name)
+    if cls is None: return redirect('/')
 
     attributes = [a[1:] for a in cls.att[1:]]
+    # Adicionamos os nomes virtuais para poder selecionar no formulário
+    if class_name == 'Utilization':
+        attributes.extend(['department_name', 'device_name', 'hospital_name'])
 
-    atts   = request.args.getlist('att[]')
-    ops    = request.args.getlist('op[]')
+    atts = request.args.getlist('att[]')
+    ops = request.args.getlist('op[]')
     values = request.args.getlist('value[]')
 
-    sort_by  = request.args.get('sort_by', '')
+    sort_by = request.args.get('sort_by', '')
     sort_dir = request.args.get('sort_dir', 'asc')
     per_page = int(request.args.get('per_page', 10))
-
-    # compatibilidade com formulário antigo
-    if not atts and request.args.get('att'):
-        atts   = [request.args.get('att')]
-        ops    = ['contains']
-        values = [request.args.get('value', '')]
 
     results = [cls.obj[id] for id in cls.lst]
 
     for att, op, value in zip(atts, ops, values):
-        if not value or att not in attributes:
-            continue
+        if not value: continue
         filtered = []
         for obj in results:
-            obj_val = getattr(obj, '_' + att, None)
-            if obj_val is None:
-                continue
+            # Lógica para obter o valor correto (seja ID ou Nome)
+            if att == 'department_name': obj_val = getattr(obj, 'department_name', "")
+            elif att == 'device_name': obj_val = getattr(obj, 'device_name', "")
+            elif att == 'hospital_name': obj_val = getattr(obj, 'hospital_name', "")
+            else: obj_val = getattr(obj, '_' + att, None)
+            
+            if obj_val is None: continue
+            
             obj_str = str(obj_val).lower()
             val_str = value.strip().lower()
+            
+            ok = False
             match op:
                 case 'contains': ok = val_str in obj_str
-                case 'equals':   ok = obj_str == val_str
-                case 'starts':   ok = obj_str.startswith(val_str)
-                case 'ends':     ok = obj_str.endswith(val_str)
+                case 'equals': ok = obj_str == val_str
+                case 'starts': ok = obj_str.startswith(val_str)
+                case 'ends': ok = obj_str.endswith(val_str)
                 case 'gt':
-                    try:    ok = float(obj_val) > float(value)
+                    try: ok = float(obj_val) > float(value)
                     except: ok = obj_str > val_str
                 case 'lt':
-                    try:    ok = float(obj_val) < float(value)
+                    try: ok = float(obj_val) < float(value)
                     except: ok = obj_str < val_str
-                case _: ok = val_str in obj_str
-            if ok:
-                filtered.append(obj)
+            if ok: filtered.append(obj)
         results = filtered
 
-    if sort_by and sort_by in attributes:
-        reverse = (sort_dir == 'desc')
-        results.sort(
-            key=lambda obj: (
-                float(getattr(obj, '_' + sort_by))
-                if str(getattr(obj, '_' + sort_by, '')).replace('.', '', 1).isdigit()
-                else str(getattr(obj, '_' + sort_by, '')).lower()
-            ),
-            reverse=reverse
-        )
-
-    results = results[:per_page]
-
-    return render_template('search.html',
-        class_name=class_name,
-        attributes=attributes,
-        results=results,
-        att=atts[0]    if atts   else '',
-        op=ops[0]      if ops    else 'contains',
-        value=values[0] if values else '',
-        sort_by=sort_by,
-        sort_dir=sort_dir,
-        per_page=per_page,
-    )
-    match att:
-        case 'department_name':
-            obj_val = obj.department_name
-        case 'device_name':
-            obj_val = obj.device_name
-        case 'hospital_name':
-            obj_val = obj.hospital_name
-        case _:
-            obj_val = getattr(obj, '_' + att, None)
-
+    return render_template('search.html', class_name=class_name, attributes=attributes, 
+                           results=results, att=atts[0] if atts else '', 
+                           op=ops[0] if ops else 'contains', value=values[0] if values else '')
 
 
 @appy.route("/dashboard", methods=["post", "get"])
