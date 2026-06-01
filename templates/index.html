@@ -32,11 +32,10 @@
                     {% set input_style = "height: 42px; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; box-sizing: border-box; width: 100%; font-size: 0.95rem;" %}
 
                     {% if butedit == 'disabled' %}
-                        {# MODO VISUALIZAÇÃO: Mostra o nome real em vez do ID #}
+                        {# MODO VISUALIZAÇÃO #}
                         {% if field_name == 'hospital_id' %}
                             <input type="text" disabled value="{{ Hospital.obj[value].name if value in Hospital.obj else value }}" style="{{ input_style }}">
                         {% elif field_name == 'department_id' %}
-                            {# Coloca o Hospital e o Departamento bloqueados lado a lado, repartindo o espaço #}
                             <div style="display: flex; gap: 10px; width: 100%;">
                                 <input type="text" disabled value="{{ Hospital.obj[Department.obj[value].hospital_id].name if value in Department.obj else 'Hospital s/ Nome' }}" style="{{ input_style }} flex: 1;">
                                 <input type="text" disabled value="{{ Department.obj[value].title if value in Department.obj else value }}" style="{{ input_style }} flex: 1;">
@@ -47,8 +46,7 @@
                             <input type="text" disabled value="{{ value }}" style="{{ input_style }}">
                         {% endif %}
                     {% else %}
-    {# MODO EDIÇÃO / INSERÇÃO #}
-    
+                        {# MODO EDIÇÃO / INSERÇÃO #}
                         {% if field_name == 'hospital_id' %}
                             <select name="hospital_id" id="select-hospital" onchange="filtrarDepartamentos()" required style="{{ input_style }}">
                                 <option value="">Selecione um Hospital</option>
@@ -132,181 +130,294 @@
     </div>
 
     {% if show_list %}
-    <table id="tabela-dados">
-        <thead>
-            <tr>
-                <th>ID</th>
-                {% for title in titles if title != 'Id' %}
-                    <th>{{ title }}</th>
+        <table id="tabela-dados">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    {% for title in titles if title != 'Id' %}
+                        <th>{{ title }}</th>
+                    {% endfor %}
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in list_data %}
+                    <tr onclick="carregarRaioXHospital({{ row['id'] }}, this)" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='transparent'">
+                        
+                        <td style="font-weight: bold; color: #3b82f6;">#{{ row['id'] }}</td>
+                        
+                        {% for field, val in row.items() if field != 'id' %}
+                            <td>{{ val }}</td>
+                        {% endfor %}
+                        
+                        <td>
+                            <span style="color: #3b82f6; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+                                Raio-X 
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </span>
+                        </td>
+                    </tr> 
                 {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in list_data %}
-            <tr>
-                <td style="font-weight: bold; color: #3b82f6;">#{{ row['id'] }}</td>
-                {% for field, val in row.items() if field != 'id' %}
-                    <td>{{ val }}</td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <div id="paginacao-container" style="display: flex; gap: 5px; justify-content: center; align-items: center; margin-top: 20px;"></div>
+            </tbody>
+        </table>
+        
+        <div id="paginacao-container" style="display: flex; gap: 5px; justify-content: center; margin-top: 15px; margin-bottom: 15px;"></div>
     {% endif %}
-</div>
+
+    <template id="template_raio_x">
+        <div id="painel_raio_x" style="background: #f8fafc; border-radius: 20px; padding: 28px; border: 1px solid #e2e8f0; margin: 15px 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <div>
+                    <span style="background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Filtro de Unidade Ativo</span>
+                    <h2 id="rx_hospital_title" style="margin: 6px 0 0 0; color: #0f172a; font-size: 1.4rem; font-weight: 800;">Nome do Hospital</h2>
+                </div>
+                <button onclick="fecharRaioXInline()" style="background: white; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s;">Fechar Raio-X</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                <div style="background: white; padding: 18px; border-radius: 12px; border: 1px solid #f1f5f9; box-shadow: 0 1px 2px rgba(0,0,0,0.01);">
+                    <p style="margin: 0; font-size: 0.78rem; color: #64748b; font-weight: 600;">Custo Máximo p/ Intervenção</p>
+                    <h4 id="kpi_rx_max" style="margin: 6px 0 0 0; font-size: 1.25rem; color: #ef4444; font-weight: 800;">0.00 €</h4>
+                </div>
+                <div style="background: white; padding: 18px; border-radius: 12px; border: 1px solid #f1f5f9; box-shadow: 0 1px 2px rgba(0,0,0,0.01);">
+                    <p style="margin: 0; font-size: 0.78rem; color: #64748b; font-weight: 600;">Custo Médio p/ Operação</p>
+                    <h4 id="kpi_rx_avg" style="margin: 6px 0 0 0; font-size: 1.25rem; color: #3b82f6; font-weight: 800;">0.00 €</h4>
+                </div>
+                <div style="background: white; padding: 18px; border-radius: 12px; border: 1px solid #f1f5f9; box-shadow: 0 1px 2px rgba(0,0,0,0.01);">
+                    <p style="margin: 0; font-size: 0.78rem; color: #64748b; font-weight: 600;">Custo Mínimo de Registo</p>
+                    <h4 id="kpi_rx_min" style="margin: 6px 0 0 0; font-size: 1.25rem; color: #10b981; font-weight: 800;">0.00 €</h4>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 25px;">
+                <div style="background: white; padding: 22px; border-radius: 14px; border: 1px solid #f1f5f9;">
+                    <h4 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #0f172a; font-weight: 700;">Rastreabilidade de Fluxo Financeiro (Sankey)</h4>
+                    <p style="margin: 0 0 15px 0; font-size: 0.75rem; color: #64748b;">Visualização de dispersão de capitais: Hospital ➔ Departamentos ➔ Dispositivos.</p>
+                    <div id="chart_rx_sankey" style="width: 100%; height: 320px;"></div>
+                </div>
+                <div style="background: white; padding: 22px; border-radius: 14px; border: 1px solid #f1f5f9;">
+                    <h4 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #0f172a; font-weight: 700;">Curva de Consumo Mensal Histórico</h4>
+                    <p style="margin: 0 0 15px 0; font-size: 0.75rem; color: #64748b;">Evolução cronológica totalizada dos encargos desta unidade.</p>
+                    <div id="chart_rx_timeline" style="width: 100%; height: 320px;"></div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
 
 <script>
-function filtrarDepartamentos() {
-    const selectHospital = document.getElementById('select-hospital') || document.getElementById('select-hospital-filtro');
-    const selectDept = document.getElementById('select-department');
-    
-    if (!selectHospital || !selectDept) return; 
-
-    const hospitalEscolhido = selectHospital.value;
-    const deptSelecionadoAtualmente = selectDept.querySelector('option:checked');
-    
-    if (deptSelecionadoAtualmente && deptSelecionadoAtualmente.value !== "") {
-        const hospitalDoDeptAtual = deptSelecionadoAtualmente.getAttribute('data-hospital');
-        if (hospitalEscolhido !== "" && hospitalDoDeptAtual !== hospitalEscolhido) {
-            selectDept.value = ""; 
+    function filtrarDepartamentos() {
+        const selectHospital = document.getElementById('select-hospital') || document.getElementById('select-hospital-filtro');
+        const selectDept = document.getElementById('select-department');
+        if (!selectHospital || !selectDept) return; 
+        const hospitalEscolhido = selectHospital.value;
+        const deptSelecionadoAtualmente = selectDept.querySelector('option:checked');
+        if (deptSelecionadoAtualmente && deptSelecionadoAtualmente.value !== "") {
+            const hospitalDoDeptAtual = deptSelecionadoAtualmente.getAttribute('data-hospital');
+            if (hospitalEscolhido !== "" && hospitalDoDeptAtual !== hospitalEscolhido) { selectDept.value = ""; }
+        }
+        const options = selectDept.getElementsByTagName('option');
+        for (let i = 0; i < options.length; i++) {
+            const opt = options[i];
+            if (opt.value === "") continue; 
+            const deptHospital = opt.getAttribute('data-hospital');
+            opt.style.display = (hospitalEscolhido === "" || deptHospital === hospitalEscolhido) ? '' : 'none';
         }
     }
-    
-    const options = selectDept.getElementsByTagName('option');
-    for (let i = 0; i < options.length; i++) {
-        const opt = options[i];
-        if (opt.value === "") continue; 
-        
-        const deptHospital = opt.getAttribute('data-hospital');
-        opt.style.display = (hospitalEscolhido === "" || deptHospital === hospitalEscolhido) ? '' : 'none';
+
+    function mascaraData(input) {
+        let v = input.value.replace(/\D/g, ""); 
+        if (v.length > 4) v = v.substring(0, 4) + "-" + v.substring(4);
+        if (v.length > 7) v = v.substring(0, 7) + "-" + v.substring(7, 9);
+        input.value = v;
     }
-}
 
-function mascaraData(input) {
-    let v = input.value.replace(/\D/g, ""); 
-    if (v.length > 4) v = v.substring(0, 4) + "-" + v.substring(4);
-    if (v.length > 7) v = v.substring(0, 7) + "-" + v.substring(7, 9);
-    input.value = v;
-}
-
-function buscaRapidaTabela() {
-    const input = document.getElementById("input-busca-rapida");
-    let filter = input.value.trim().toUpperCase();
-    const table = document.getElementById("tabela-dados");
-    
-    if (!table) return;
-    
-    const tr = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
-    const procurarPorID = filter.startsWith("#");
-    if (procurarPorID) filter = filter.substring(1);
-
-    for (let i = 0; i < tr.length; i++) {
-        if (procurarPorID) {
-            let idTd = tr[i].getElementsByTagName("td")[0];
-            let idValue = idTd ? (idTd.textContent || idTd.innerText).replace("#", "").trim() : "";
-            
-            if (idValue === filter || idValue.startsWith(filter)) {
-                tr[i].classList.remove("filtrado-escondido");
+    function buscaRapidaTabela() {
+        const input = document.getElementById("input-busca-rapida");
+        let filter = input.value.trim().toUpperCase();
+        const table = document.getElementById("tabela-dados");
+        if (!table) return;
+        const tr = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+        const procurarPorID = filter.startsWith("#");
+        if (procurarPorID) filter = filter.substring(1);
+        for (let i = 0; i < tr.length; i++) {
+            if (procurarPorID) {
+                let idTd = tr[i].getElementsByTagName("td")[0];
+                let idValue = idTd ? (idTd.textContent || idTd.innerText).replace("#", "").trim() : "";
+                if (idValue === filter || idValue.startsWith(filter)) { tr[i].classList.remove("filtrado-escondido"); } else { tr[i].classList.add("filtrado-escondido"); }
             } else {
-                tr[i].classList.add("filtrado-escondido");
-            }
-        } else {
-            let txtValue = tr[i].textContent || tr[i].innerText;
-            if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                tr[i].classList.remove("filtrado-escondido");
-            } else {
-                tr[i].classList.add("filtrado-escondido");
+                let txtValue = tr[i].textContent || tr[i].innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) { tr[i].classList.remove("filtrado-escondido"); } else { tr[i].classList.add("filtrado-escondido"); }
             }
         }
-    }
-    paginarTabela();
-}
-
-const linhasPorPagina = 25;
-let paginaAtual = 1;
-
-function paginarTabela() {
-    const table = document.getElementById("tabela-dados");
-    if (!table) return;
-    
-    const tbody = table.getElementsByTagName("tbody")[0];
-    const todasAsLinhas = tbody.getElementsByTagName("tr");
-    const linhasValidas = Array.from(todasAsLinhas).filter(tr => !tr.classList.contains("filtrado-escondido"));
-    const totalPaginas = Math.ceil(linhasValidas.length / linhasPorPagina);
-    const container = document.getElementById("paginacao-container");
-    
-    if (!container) return;
-    container.innerHTML = "";
-    
-    for (let i = 0; i < todasAsLinhas.length; i++) {
-        if (todasAsLinhas[i].classList.contains("filtrado-escondido")) {
-            todasAsLinhas[i].style.display = "none";
-        }
+        paginarTabela();
     }
 
-    if (totalPaginas <= 1) {
-        linhasValidas.forEach(tr => tr.style.display = "");
-        return; 
-    }
+    const linhasPorPagina = 25;
+    let paginaAtual = 1;
 
-    function renderizarNavegacao(numPagina) {
-        paginaAtual = numPagina;
-        const inicio = (numPagina - 1) * linhasPorPagina;
-        const fim = inicio + linhasPorPagina;
-
-        linhasValidas.forEach((tr, index) => {
-            tr.style.display = (index >= inicio && index < fim) ? "" : "none";
-        });
-
+    function paginarTabela() {
+        const table = document.getElementById("tabela-dados");
+        if (!table) return;
+        const tbody = table.getElementsByTagName("tbody")[0];
+        const todasAsLinhas = tbody.querySelectorAll("tr:not(.linha-raio-x-container)");
+        const linhasValidas = Array.from(todasAsLinhas).filter(tr => !tr.classList.contains("filtrado-escondido"));
+        const totalPaginas = Math.ceil(linhasValidas.length / linhasPorPagina);
+        const container = document.getElementById("paginacao-container");
+        if (!container) return;
         container.innerHTML = "";
-
-        function criarBotao(texto, destino, desativado = false, ativo = false) {
-            const btn = document.createElement("button");
-            btn.innerText = texto;
-            btn.className = "btn";
-            btn.style.padding = "6px 12px";
-            btn.style.cursor = desativado ? "default" : "pointer";
-            btn.disabled = desativado;
-            
-            if (ativo) {
-                btn.style.background = "#3b82f6";
-                btn.style.color = "white";
-            } else if (desativado) {
-                btn.style.background = "#f8fafc";
-                btn.style.color = "#cbd5e1";
-            } else {
-                btn.style.background = "#f1f5f9";
-                btn.style.color = "#334155";
+        for (let i = 0; i < todasAsLinhas.length; i++) { if (todasAsLinhas[i].classList.contains("filtrado-escondido")) { todasAsLinhas[i].style.display = "none"; } }
+        if (totalPaginas <= 1) { linhasValidas.forEach(tr => tr.style.display = ""); return; }
+        function renderizarNavegacao(numPagina) {
+            paginaAtual = numPagina;
+            const inicio = (numPagina - 1) * linhasPorPagina;
+            const fim = inicio + linhasPorPagina;
+            linhasValidas.forEach((tr, index) => { tr.style.display = (index >= inicio && index < fim) ? "" : "none"; });
+            container.innerHTML = "";
+            function criarBotao(texto, destino, desativado = false, ativo = false) {
+                const btn = document.createElement("button");
+                btn.innerText = texto; btn.className = "btn"; btn.style.padding = "6px 12px"; btn.style.cursor = desativado ? "default" : "pointer"; btn.disabled = desativado;
+                if (ativo) { btn.style.background = "#3b82f6"; btn.style.color = "white"; } else if (desativado) { btn.style.background = "#f8fafc"; btn.style.color = "#cbd5e1"; } else { btn.style.background = "#f1f5f9"; btn.style.color = "#334155"; }
+                if (!desativado && !ativo) { btn.onclick = function() { renderizarNavegacao(destino); }; }
+                container.appendChild(btn);
             }
-
-            if (!desativado && !ativo) {
-                btn.onclick = function() { renderizarNavegacao(destino); };
-            }
-            container.appendChild(btn);
+            criarBotao("|<<", 1, paginaAtual === 1);
+            criarBotao("<", paginaAtual - 1, paginaAtual === 1);
+            let inicioJanela = Math.max(1, paginaAtual - 2);
+            let fimJanela = Math.min(totalPaginas, paginaAtual + 2);
+            for (let i = inicioJanela; i <= fimJanela; i++) { criarBotao(i, i, false, i === paginaAtual); }
+            criarBotao(">", paginaAtual + 1, paginaAtual === totalPaginas);
+            criarBotao(">>|", totalPaginas, paginaAtual === totalPaginas);
         }
-
-        criarBotao("|<<", 1, paginaAtual === 1);
-        criarBotao("<", paginaAtual - 1, paginaAtual === 1);
-
-        let inicioJanela = Math.max(1, paginaAtual - 2);
-        let fimJanela = Math.min(totalPaginas, paginaAtual + 2);
-
-        for (let i = inicioJanela; i <= fimJanela; i++) {
-            criarBotao(i, i, false, i === paginaAtual);
-        }
-
-        criarBotao(">", paginaAtual + 1, paginaAtual === totalPaginas);
-        criarBotao(">>|", totalPaginas, paginaAtual === totalPaginas);
+        renderizarNavegacao(1);
     }
 
-    renderizarNavegacao(1);
+    function confirmarEliminacao() { return confirm("Tem a certeza absoluta que deseja eliminar este registo? Esta ação não pode ser revertida."); }
+
+let linhaContainerAtiva = null;
+let idHospitalAtivo = null;
+
+function fecharRaioXInline() {
+    if (linhaContainerAtiva) {
+        linhaContainerAtiva.remove();
+        linhaContainerAtiva = null;
+        idHospitalAtivo = null;
+    }
 }
 
-function confirmarEliminacao() {
-    return confirm("Tem a certeza absoluta que deseja eliminar este registo? Esta ação não pode ser revertida.");
-}
-</script>
+function carregarRaioXHospital(hospitalId, elementoTr) {
+    // Se clicou na mesma linha que já está aberta, fecha-a
+    if (idHospitalAtivo === hospitalId) {
+        fecharRaioXInline();
+        return;
+    }
 
+    // Limpar qualquer painel aberto anteriormente
+    fecharRaioXInline();
+
+    // Descobrir quantas colunas tem a tabela para o colspan expandir a largura toda
+    const numeroColunas = elementoTr.cells.length;
+
+    // Fazer o pedido à API Flask
+    fetch(`/api/hospital/${hospitalId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            // 1. Criar a nova linha e célula expandida
+            linhaContainerAtiva = document.createElement('tr');
+            linhaContainerAtiva.className = 'linha-raio-x-container';
+            // Evitar que cliques dentro do gráfico fechem o painel ou façam efeitos na linha
+            linhaContainerAtiva.onclick = (e) => e.stopPropagation(); 
+            
+            const tdGigante = document.createElement('td');
+            tdGigante.colSpan = numeroColunas;
+            tdGigante.style.padding = "0"; // Alinhamento perfeito
+            tdGigante.style.background = "#f8fafc";
+
+            // 2. Clonar a estrutura HTML limpa a partir do template
+            const template = document.getElementById('template_raio_x');
+            const clone = template.content.cloneNode(true);
+            
+            // Injetar o clone dentro da célula e a célula na linha nova
+            tdGigante.appendChild(clone);
+            linhaContainerAtiva.appendChild(tdGigante);
+
+            // 3. Inserir a nova linha na tabela exatamente APÓS a linha clicada!
+            elementoTr.parentNode.insertBefore(linhaContainerAtiva, elementoTr.nextSibling);
+            idHospitalAtivo = hospitalId;
+
+            // 4. Preencher os dados nos elementos recém-criados
+            document.getElementById('rx_hospital_title').innerText = `Raio-X Orçamental: ${data.hospital_name}`;
+            document.getElementById('kpi_rx_max').innerText = data.kpis.max.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
+            document.getElementById('kpi_rx_avg').innerText = data.kpis.avg.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
+            document.getElementById('kpi_rx_min').innerText = data.kpis.min.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
+
+            // Fazer um scroll suave focado na abertura do painel
+            linhaContainerAtiva.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            if (!data.has_data) {
+                document.getElementById('chart_rx_sankey').innerHTML = "<p style='text-align:center; padding-top:100px; color:#94a3b8;'>Sem registos de utilização nesta unidade.</p>";
+                document.getElementById('chart_rx_timeline').innerHTML = "";
+                return;
+            }
+
+            // --- DESENHAR O DIAGRAMA DE SANKEY ---
+            const dataSankey = [{
+                type: "sankey",
+                orientation: "h",
+                node: {
+                    pad: 15,
+                    thickness: 18,
+                    line: { color: "rgba(15, 23, 42, 0.08)", width: 0.5 },
+                    label: data.sankey.labels,
+                    color: data.sankey.labels.map((_, i) => i === 0 ? "#0f172a" : i < 5 ? "rgba(59, 130, 246, 0.8)" : "rgba(16, 185, 129, 0.7)")
+                },
+                link: {
+                    source: data.sankey.sources,
+                    target: data.sankey.targets,
+                    value: data.sankey.values,
+                    color: "rgba(226, 232, 240, 0.4)",
+                    hovertemplate: 'Fluxo: %{value:,.2f} €<extra></extra>'
+                }
+            }];
+
+            const layoutSankey = {
+                font: { family: "'Inter', sans-serif", size: 10, color: "#475569" },
+                margin: { t: 10, b: 10, l: 10, r: 10 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            };
+
+            Plotly.newPlot('chart_rx_sankey', dataSankey, layoutSankey, { responsive: true, displayModeBar: false });
+
+            // --- DESENHAR A EVOLUÇÃO CRONOLÓGICA ---
+            const dataTimeline = [{
+                x: data.timeline.x,
+                y: data.timeline.y,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#4f46e5', width: 2.5 },
+                marker: { size: 5, color: '#4f46e5' },
+                hovertemplate: 'Mês %{x}<br>Encargos: %{y:,.2f} €<extra></extra>'
+            }];
+
+            const layoutTimeline = {
+                font: { family: "'Inter', sans-serif", color: '#64748b' },
+                margin: { t: 15, b: 40, l: 55, r: 15 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                xaxis: { gridcolor: '#f8fafc', type: 'category', tickangle: -45, font: { size: 9 } },
+                yaxis: { gridcolor: '#f1f5f9', zeroline: false }
+            };
+
+            Plotly.newPlot('chart_rx_timeline', dataTimeline, layoutTimeline, { responsive: true, displayModeBar: false });
+        })
+        .catch(err => console.error("Erro ao carregar detalhes do hospital:", err));
+}
+</script>   
 {% endblock %}
