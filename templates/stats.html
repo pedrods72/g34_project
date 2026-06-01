@@ -77,9 +77,18 @@
                     <button id="btn-show-more" class="btn btn-primary" onclick="toggleTable()">Mostrar Mais</button>
                 </div>
             </div>
-    </div>
-
+    </div>   
 </div>
+{% if alertas %}
+    <div class="alert alert-danger">
+        <h3>⚠️ Alertas de Gastos Elevados</h3>
+        <ul>
+        {% for alerta in alertas %}
+            <li>O hospital <strong>{{ alerta.name }}</strong> ultrapassou o limite crítico com um total de {{ alerta.total_spend }}€!</li>
+        {% endfor %}
+        </ul>
+    </div>
+{% endif %}
 
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script>

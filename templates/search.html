@@ -72,10 +72,10 @@
             <div class="form-group" style="margin:0;">
                 <label style="font-size:0.72rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Resultados por página</label>
                 <select name="per_page" style="padding:8px 10px; font-size:0.9rem;">
-                    <option value="10">10 por página</option>
-                    <option value="25">25 por página</option>
-                    <option value="50">50 por página</option>
-                    <option value="100">100 por página</option>
+                    <option value="10" {{ 'selected' if per_page == '10' or not per_page }}>10 por página</option>
+                    <option value="25" {{ 'selected' if per_page == '25' }}>25 por página</option>
+                    <option value="50" {{ 'selected' if per_page == '50' }}>50 por página</option>
+                    <option value="100" {{ 'selected' if per_page == '100' }}>100 por página</option>
                 </select>
             </div>
         </div>
@@ -107,7 +107,8 @@
                 </tr>
             </thead>
             <tbody>
-                {% for obj in results %}
+                {% set limite = (per_page | int) if per_page else 10 %}
+                {% for obj in results[:limite] %}
                 <tr>
                     {% for a in attributes %}
                         <td>

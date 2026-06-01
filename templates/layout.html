@@ -16,11 +16,11 @@
     <nav>
         {%if ulogin %}
          <a href="/stats" class="nav-link">Dashboard</a>
-         <a href="/?class=Hospital&option=first" class="nav-link">Hospitais</a>
-         <a href="/?class=Department&option=first" class="nav-link">Departamentos</a>
-         <a href="/?class=Device&option=first" class="nav-link">Dispositivos</a>
-         <a href="/?class=Utilization&option=first" class="nav-link">Utilizações</a>
-         <a href="/?class=Userlogin&option=first" class="nav-link">User: {{ ulogin }}</a>
+         <a href="/index?class=Hospital&option=first" class="nav-link">Hospitais</a>
+         <a href="/index?class=Department&option=first" class="nav-link">Departamentos</a>
+         <a href="/index?class=Device&option=first" class="nav-link">Dispositivos</a>
+         <a href="/index?class=Utilization&option=first" class="nav-link">Utilizações</a>
+         <a href="/index?class=Userlogin&option=first" class="nav-link">User: {{ ulogin }}</a>
          <a href="/logoff" class="nav-link">Logout</a>
         {% else %}
          <a href="/login" class="nav-link">Login</a>

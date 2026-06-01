@@ -12,11 +12,11 @@
                 </svg>
                 Pesquisa Avançada
             </a>
-            <button class="btn btn-primary" onclick="window.location.href='/?option=insert'">Novo Registo</button>
+            <button class="btn btn-primary" onclick="window.location.href='/index?option=insert'">Novo Registo</button>
         </div>
     </div>
 
-    <form id="form" action="/?class={{ class_name }}&option=save" method="post">
+    <form id="form" action="/index?class={{ class_name }}&option=save" method="post">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; min-height: 280px; align-content: start;">
             
             <div class="form-group" style="display: flex; flex-direction: column;">
@@ -102,19 +102,19 @@
                 {% if butedit == 'enabled' %}
                     <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; height: 42px;">Guardar Alterações</button>
                     <button type="reset" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px;">Limpar Formulário</button>
-                    <a href="/?option=cancel" class="btn" style="background: #e2e8f0; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Cancelar</a>
+                    <a href="/index?option=cancel" class="btn" style="background: #e2e8f0; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Cancelar</a>
                 {% else %}
-                    <a href="/?option=edit" class="btn btn-primary" style="display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Editar</a>
-                    <a href="/?option=delete" class="btn" style="background: #fee2e2; color: #991b1b; display: inline-flex; align-items: center; height: 42px; text-decoration: none;" onclick="return confirmarEliminacao();">Eliminar</a>
+                    <a href="/index?option=edit" class="btn btn-primary" style="display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Editar</a>
+                    <a href="/index?option=delete" class="btn" style="background: #fee2e2; color: #991b1b; display: inline-flex; align-items: center; height: 42px; text-decoration: none;" onclick="return confirmarEliminacao();">Eliminar</a>
                 {% endif %}
             </div>
             
             {% if butedit != 'enabled' %}
             <div style="display: flex; gap: 6px; align-items: center;">
-                <a href="/?option=first" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">⏮ Primeiro</a>
-                <a href="/?option=previous" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Anterior</a>
-                <a href="/?option=next" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Próximo</a>
-                <a href="/?option=last" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Último ⏭</a>
+                <a href="/index?option=first" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">⏮ Primeiro</a>
+                <a href="/index?option=previous" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Anterior</a>
+                <a href="/index?option=next" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Próximo</a>
+                <a href="/index?option=last" class="btn" style="background: #f1f5f9; color: #334155; display: inline-flex; align-items: center; height: 42px; text-decoration: none;">Último ⏭</a>
             </div>
             {% endif %}
         </div>
@@ -124,10 +124,10 @@
 <div class="card" style="margin-top: 30px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         {% if show_list %}
-            <a href="/?class={{ class_name }}" class="btn" style="background: #64748b; color: white;">Fechar Lista</a>
+            <a href="/index?class={{ class_name }}" class="btn" style="background: #64748b; color: white;">Fechar Lista</a>
             <input type="text" id="input-busca-rapida" onkeyup="buscaRapidaTabela()" placeholder="Filtrar nesta tabela..." style="width: 250px; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; margin: 0;">
         {% else %}
-            <a href="/?option=list" class="btn" style="background: #3b82f6; color: white;">Ver Lista Completa</a>
+            <a href="/index?option=list" class="btn" style="background: #3b82f6; color: white;">Ver Lista Completa</a>
         {% endif %}
     </div>
 
@@ -307,11 +307,6 @@ function paginarTabela() {
 function confirmarEliminacao() {
     return confirm("Tem a certeza absoluta que deseja eliminar este registo? Esta ação não pode ser revertida.");
 }
-
-document.addEventListener("DOMContentLoaded", function() {
-    filtrarDepartamentos();
-    paginarTabela();
-});
 </script>
 
 {% endblock %}

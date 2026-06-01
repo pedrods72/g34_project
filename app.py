@@ -15,6 +15,7 @@ from classes.device import Device
 from classes.utilization import Utilization
 from classes.userlogin import Userlogin
 import pandas as pd
+import plotly.express as px  # Adicionado para os gráficos interativos
 
 appy = Flask(__name__)
 appy.config["TEMPLATES_AUTO_RELOAD"] = True          # reload automático de templates
@@ -25,7 +26,7 @@ appy.jinja_env.globals['getattr'] = getattr          # getattr disponível nos t
 # o ficheiro app.py está guardado, independentemente do terminal.
 db_name = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data', 'HospitalData.db')
 
-# Lê os dados
+# lê os dados
 Userlogin.read(db_name)
 Hospital.read(db_name)
 Department.read(db_name)
@@ -44,7 +45,6 @@ classes_map = {
 }
 
 
-
 @appy.route("/login")
 def login():
     return render_template("login.html", id=0, user="", password="",
@@ -53,7 +53,7 @@ def login():
 @appy.route("/logoff")
 def logoff():
     session.pop("user", None)
-    return render_template("login.html", ulogin=session.get("user"))
+    return redirect(url_for('home'))
 
 @appy.route("/chklogin", methods=["post", "get"])
 def chklogin():
@@ -67,6 +67,7 @@ def chklogin():
                            ulogin=session.get("user"), resul=resul)
 
 
+# pandas
 
 def tendencias_mensais():
     if not Utilization.lst:
@@ -152,44 +153,57 @@ def eficiencia_hospitais():
     df_final = df_final.sort_values(by='avg_per_dept', ascending=False)
 
     return df_final[['name', 'depts', 'total_spend', 'avg_per_dept']].to_dict(orient='records')
-def analise_custo_volume_hospitais():
-    if not Utilization.lst or not Department.lst or not Hospital.lst:
+
+
+# antigo analise_hospitalar.py autoria: stockler
+
+def criar_grafico_gastos_plotly(dados_gastos):
+    if not dados_gastos:
+        return "<p>Sem dados para gerar gráfico.</p>"
+    df = pd.DataFrame(dados_gastos)
+    fig = px.bar(df, x='category', y='cost',
+                 title="Custos por Categoria de Dispositivo",
+                 labels={'category': 'Categoria', 'cost': 'Custo Total (€)'},
+                 color='cost', color_continuous_scale='Blues')
+    return fig.to_html(full_html=False)
+
+
+def criar_grafico_tendencias(dados_trends):
+    if not dados_trends:
+        return ""
+    df = pd.DataFrame(dados_trends)
+    fig = px.line(df, x='period', y='total', 
+                  title="Evolução Mensal de Utilização",
+                  markers=True)
+    return fig.to_html(full_html=False)
+
+
+def grafico_rentabilidade_dispositivos(utilization_cls, device_cls):
+    if not utilization_cls.lst or not device_cls.lst:
+        return "<p>Sem dados para gerar gráfico de rentabilidade.</p>"
+    df_util = pd.DataFrame([{'dev_id': u.device_id, 'amt': u.amount} for u in utilization_cls.obj.values()])
+    df_dev = pd.DataFrame([{'id': d.id, 'cat': d.category} for d in device_cls.obj.values()])
+  
+    df = pd.merge(df_util, df_dev, left_on='dev_id', right_on='id')
+    resumo = df.groupby('cat').agg({'amt': 'sum', 'dev_id': 'count'}).reset_index()
+    resumo.columns = ['Categoria', 'Custo_Total', 'Frequencia']
+    
+    fig = px.scatter(resumo, x="Frequencia", y="Custo_Total", size="Custo_Total", 
+                     color="Categoria", hover_name="Categoria",
+                     title="Análise de Rentabilidade: Uso vs Investimento")
+    return fig.to_html(full_html=False)
+
+
+def detetar_alertas_gastos(efficiency_data):
+    if not efficiency_data:
         return []
-
-    # 1. Recolher todas as utilizações e associar ao respetivo Hospital
-    dados_utilizacao = []
-    for u in Utilization.obj.values():
-        if u.department_id in Department.obj:
-            h_id = Department.obj[u.department_id].hospital_id
-            dados_utilizacao.append({
-                'hospital_id': h_id,
-                'amount': u.amount
-            })
-            
-    if not dados_utilizacao:
-        return []
-
-    df_utils = pd.DataFrame(dados_utilizacao)
-
-    # 2. Agrupar por Hospital para calcular o Custo Total e contar o Nº de Utilizações
-    # .size() conta quantas vezes o hospital aparece (Volume de atividade)
-    df_analise = df_utils.groupby('hospital_id').agg(
-        custo_total=('amount', 'sum'),
-        num_utilizacoes=('amount', 'size')
-    ).reset_index()
-
-    # 3. Trazer o nome correto do Hospital
-    df_hospitais = pd.DataFrame([{
-        'hospital_id': h.id,
-        'hospital_name': h.name
-    } for h in Hospital.obj.values()])
-
-    df_final = df_hospitais.merge(df_analise, on='hospital_id', how='inner')
-
-    # Devolve o formato de lista de dicionários que o Plotly e o HTML adoram
-    return df_final.to_dict(orient='records')
+    df = pd.DataFrame(efficiency_data)
+    limite = df['total_spend'].mean() * 1.2
+    alertas = df[df['total_spend'] > limite]
+    return alertas[['name', 'total_spend']].to_dict(orient='records')
 
 
+# atalhos
 
 @appy.route("/stats")
 def stats():
@@ -205,13 +219,11 @@ def stats():
     avg_amount          = round(total_amount / total_utilizacoes, 2) if total_utilizacoes else 0
     total_amount_fmt    = f"{total_amount:,}€".replace(",", " ")
 
-    # --- Consultas SQL com chaves estrangeiras resolvidas ---
+   
     con = sqlite3.connect(db_name)
     cur = con.cursor()
 
-
-
-    # Barras: Top 10 departamentos com nome do hospital resolvido
+    
     cur.execute('''
         SELECT d.title, d.extra_info, h.name,
                (SELECT dev2.category
@@ -241,7 +253,7 @@ def stats():
         for r in dept_rows
     ]
 
-    # Linha: evolução anual
+    
     cur.execute('''
         SELECT strftime('%Y', utilization_date), SUM(amount)
         FROM Utilization
@@ -252,7 +264,7 @@ def stats():
     anual_labels = [r[0] for r in anual_rows]
     anual_values = [r[1] for r in anual_rows]
 
-    # Barras horizontais: Top 15 hospitais
+    
     cur.execute('''
         SELECT h.name, SUM(u.amount) AS total
         FROM Utilization u
@@ -268,10 +280,13 @@ def stats():
 
     con.close()
 
+
     trends     = tendencias_mensais()
     pareto     = gastos_dispositivos()
     efficiency = eficiencia_hospitais()
-    custo_volume = analise_custo_volume_hospitais() 
+
+    
+    alertas               = detetar_alertas_gastos(efficiency)
 
     return render_template("stats.html",
         ulogin=session.get('user'),
@@ -285,8 +300,8 @@ def stats():
         trends=trends,
         pareto=pareto,
         efficiency=efficiency,
-        custo_volume=custo_volume,
-        # gráficos
+        alertas=alertas,
+        # gráficos estáticos antigos / dados raw
         top_depts_labels=top_depts_labels,
         top_depts_hospitals=top_depts_hospitals,
         top_depts_values=top_depts_values,
@@ -295,13 +310,15 @@ def stats():
         hosp_labels=hosp_labels,
         hosp_values=hosp_values,
         # tabelas
-        top_depts_table=top_depts_table,
+        top_depts_table=top_depts_table
     )
 
 
-
-@appy.route("/search")
+@appy.route("/search") # autoria: couto
 def search():
+    appy.jinja_env.globals.update(hasattr=hasattr)
+    current_user_obj = Userlogin.find(session.get("user"), 'user')
+    user_group = current_user_obj[0].usergroup if current_user_obj else ""
     class_name = request.args.get('class', 'Hospital')
     cls = classes_map.get(class_name)
     if cls is None: return redirect('/')
@@ -353,16 +370,22 @@ def search():
 
     return render_template('search.html', class_name=class_name, attributes=attributes, 
                            results=results, att=atts[0] if atts else '', 
-                           op=ops[0] if ops else 'contains', value=values[0] if values else '')
+                           op=ops[0] if ops else 'contains', value=values[0] if values else '',
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+        per_page=per_page,
+        ulogin=session.get("user"),
+        user_group=user_group
+    )
 
 
-@appy.route("/dashboard", methods=["post", "get"])
+@appy.route("/index", methods=["post", "get"]) # autoria: martim
 def index():
     global prev_option
 
     if not session.get("user"):
-        return redirect(url_for('login'))
-
+        return redirect(url_for('home'))
+    
     current_user_obj = Userlogin.find(session.get("user"), 'user')
     user_group = current_user_obj[0].usergroup if current_user_obj else ""
 
@@ -468,17 +491,110 @@ def index():
                            list_data=list_data,
                            ulogin=session.get("user"),
                            user_group=user_group)
+# autoria: tiago
 @appy.route("/")
 def home():
-    return render_template("home.html")
+    if not session.get("user"):
+        return render_template("home.html")
+    else:
+        return redirect(url_for('stats'))
 
+
+@appy.route('/api/hospital/<int:hospital_id>/details')
+def api_hospital_details(hospital_id):
+    if not session.get("user"):
+        from flask import jsonify
+        return jsonify({"error": "Sessão expirada"}), 401
+
+    if hospital_id not in Hospital.obj:
+        from flask import jsonify
+        return jsonify({"error": "Hospital não encontrado"}), 404
+
+    hosp = Hospital.obj[hospital_id]
+    
+    # 1. Filtrar departamentos e utilizações desta unidade
+    depts_da_unidade = [d.id for d in Department.obj.values() if d.hospital_id == hospital_id]
+    utils_da_unidade = [u for u in Utilization.obj.values() if u.department_id in depts_da_unidade]
+
+    from flask import jsonify
+    response_data = {
+        "hospital_name": hosp.name,
+        "has_data": False,
+        "kpis": {"max": 0, "avg": 0, "min": 0},
+        "sankey": {"labels": [], "sources": [], "targets": [], "values": []},
+        "timeline": {"x": [], "y": []}
+    }
+
+    if not utils_da_unidade:
+        return jsonify(response_data)
+
+    # Converter para DataFrame Pandas para análise avançada
+    df = pd.DataFrame([{
+        'dept_id': u.department_id,
+        'device_id': u.device_id,
+        'amount': u.amount,
+        'date': u.utilization_date
+    } for u in utils_da_unidade])
+
+    response_data["has_data"] = True
+    response_data["kpis"] = {
+        "max": float(df['amount'].max()),
+        "avg": round(float(df['amount'].mean()), 2),
+        "min": float(df['amount'].min())
+    }
+
+    # --- PROCESSAR DIAGRAMA DE SANKEY INLINE ---
+    labels = [hosp.name]
+    dept_labels = [Department.obj[d_id].title for d_id in depts_da_unidade if d_id in Department.obj]
+    dev_ids_presentes = df['device_id'].unique()
+    dev_labels = [Device.obj[dv_id].category for dv_id in dev_ids_presentes if dv_id in Device.obj]
+    
+    labels.extend(dept_labels)
+    labels.extend(dev_labels)
+    
+    label_to_index = {name: idx for idx, name in enumerate(labels)}
+    
+    sources, targets, values = [], [], []
+
+    # Fluxo 1: Hospital -> Departamentos
+    df_dept_summary = df.groupby('dept_id')['amount'].sum().reset_index()
+    for _, row in df_dept_summary.iterrows():
+        d_id = int(row['dept_id'])
+        if d_id in Department.obj:
+            d_name = Department.obj[d_id].title
+            sources.append(label_to_index[hosp.name])
+            targets.append(label_to_index[d_name])
+            values.append(float(row['amount']))
+
+    # Fluxo 2: Departamentos -> Categorias de Dispositivos
+    df_dev_summary = df.groupby(['dept_id', 'device_id'])['amount'].sum().reset_index()
+    for _, row in df_dev_summary.iterrows():
+        d_id = int(row['dept_id'])
+        dv_id = int(row['device_id'])
+        if d_id in Department.obj and dv_id in Device.obj:
+            d_name = Department.obj[d_id].title
+            dv_name = Device.obj[dv_id].category
+            sources.append(label_to_index[d_name])
+            targets.append(label_to_index[dv_name])
+            values.append(float(row['amount']))
+
+    response_data["sankey"] = {
+        "labels": labels,
+        "sources": sources,
+        "targets": targets,
+        "values": values
+    }
+
+    # --- PROCESSAR EVOLUÇÃO CRONOLÓGICA MENSAL ---
+    df['month'] = pd.to_datetime(df['date']).dt.to_period('M').astype(str)
+    df_time = df.groupby('month')['amount'].sum().reset_index().sort_values('month')
+    
+    response_data["timeline"] = {
+        "x": df_time['month'].tolist(),
+        "y": df_time['amount'].tolist()
+    }
+
+    return jsonify(response_data)    
 
 if __name__ == "__main__":
     appy.run(debug=True, use_reloader=False)
-
-# TODO: dashboard com valores essenciais, melhorar gráficos, linhas com médias/medianas
-# TODO: usar pandas, plotly, matplotlib
-# TODO: interface de pesquisa no index em vez do search
-# TODO: ecrã inicial mais apelativo
-# TODO: continuar a melhorar a experiência do utilizador
-# TODO: finalizar interface do Userlogin
