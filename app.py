@@ -152,7 +152,42 @@ def eficiencia_hospitais():
     df_final = df_final.sort_values(by='avg_per_dept', ascending=False)
 
     return df_final[['name', 'depts', 'total_spend', 'avg_per_dept']].to_dict(orient='records')
+def analise_custo_volume_hospitais():
+    if not Utilization.lst or not Department.lst or not Hospital.lst:
+        return []
 
+    # 1. Recolher todas as utilizações e associar ao respetivo Hospital
+    dados_utilizacao = []
+    for u in Utilization.obj.values():
+        if u.department_id in Department.obj:
+            h_id = Department.obj[u.department_id].hospital_id
+            dados_utilizacao.append({
+                'hospital_id': h_id,
+                'amount': u.amount
+            })
+            
+    if not dados_utilizacao:
+        return []
+
+    df_utils = pd.DataFrame(dados_utilizacao)
+
+    # 2. Agrupar por Hospital para calcular o Custo Total e contar o Nº de Utilizações
+    # .size() conta quantas vezes o hospital aparece (Volume de atividade)
+    df_analise = df_utils.groupby('hospital_id').agg(
+        custo_total=('amount', 'sum'),
+        num_utilizacoes=('amount', 'size')
+    ).reset_index()
+
+    # 3. Trazer o nome correto do Hospital
+    df_hospitais = pd.DataFrame([{
+        'hospital_id': h.id,
+        'hospital_name': h.name
+    } for h in Hospital.obj.values()])
+
+    df_final = df_hospitais.merge(df_analise, on='hospital_id', how='inner')
+
+    # Devolve o formato de lista de dicionários que o Plotly e o HTML adoram
+    return df_final.to_dict(orient='records')
 
 
 
