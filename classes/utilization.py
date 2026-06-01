@@ -81,3 +81,20 @@ class Utilization(Gclass):
     @amount.setter
     def amount(self, amount):
         self._amount = amount
+    @property
+    def department_name(self):
+        dept = Department.obj.get(self._department_id)
+        return dept.title if dept else "N/A"
+
+    @property
+    def device_name(self):
+        dev = Device.obj.get(self._device_id)
+        return dev.category if dev else "N/A"
+
+    @property
+    def hospital_name(self):
+        dept = Department.obj.get(self._department_id)
+        if dept:
+            hosp = Hospital.obj.get(dept.hospital_id)
+            return hosp.name if hosp else "N/A"
+        return "N/A"
