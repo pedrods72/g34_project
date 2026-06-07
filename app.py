@@ -140,23 +140,28 @@ def analise_saturacao_departamentos():
             dados.append({
                 'hospital_id': h_id,
                 'dept_title': dept.title,
+                'dept_id': u_dept, 
                 'amount': float(getattr(u, 'amount', getattr(u, '_amount', 0.0)))
             })
     if not dados:
         return []
     df = pd.DataFrame(dados)
-    df_dept_gastos = df.groupby(['hospital_id', 'dept_title'])['amount'].sum().reset_index()
+    df_dept_gastos = df.groupby(['hospital_id', 'dept_title', 'dept_id'])['amount'].sum().reset_index()
     df_media_nacional = df.groupby('dept_title')['amount'].sum().reset_index()
     total_hospitais = len(Hospital.lst)
     df_media_nacional['media_nacional'] = df_media_nacional['amount'] / total_hospitais
     df_analise = df_dept_gastos.merge(df_media_nacional[['dept_title', 'media_nacional']], on='dept_title', how='left')
-    df_analise['desvio_perc'] = ((df_analise['amount'] - df_analise['media_nacional']) / df_media_nacional['media_nacional']) * 100
+    df_analise['desvio_perc'] = ((df_analise['amount'] - df_analise['media_nacional']) / df_analise['media_nacional']) * 100
     df_criticos = df_analise[df_analise['desvio_perc'] > 40].copy()
     df_hospitais = pd.DataFrame([{'hospital_id': h.id, 'hospital_name': h.name} for h in Hospital.obj.values()])
     df_final = df_criticos.merge(df_hospitais, on='hospital_id', how='inner')
     df_final['amount'] = df_final['amount'].round(2)
     df_final['desvio_perc'] = df_final['desvio_perc'].round(1)
-    return df_final[['hospital_name', 'dept_title', 'amount', 'desvio_perc']].to_dict(orient='records')
+    print(f"DEBUG df_dept_gastos:\n{df_dept_gastos}")
+    print(f"DEBUG df_criticos:\n{df_criticos}")
+    print(f"DEBUG df_final:\n{df_final}")
+    result = df_final[['hospital_name', 'dept_title', 'dept_id', 'amount', 'desvio_perc']].to_dict(orient='records')
+    return result
     
 # rotas do site
 
@@ -519,9 +524,9 @@ def api_hospital_details(hospital_id):
             values.append(float(row['amount']))
 
     response_data["sankey"] = {"labels": labels, "sources": sources, "targets": targets, "values": values}
-    df['month'] = pd.to_datetime(df['date']).dt.to_period('M').astype(str)
-    df_time = df.groupby('month')['amount'].sum().reset_index().sort_values('month')
-    response_data["timeline"] = {"x": df_time['month'].tolist(), "y": df_time['amount'].tolist()}
+    df['period'] = pd.to_datetime(df['date']).dt.to_period('Q').astype(str)
+    df_time = df.groupby('period')['amount'].sum().reset_index().sort_values('period')
+    response_data["timeline"] = {"x": df_time['period'].tolist(), "y": df_time['amount'].tolist()}
 
     return jsonify(response_data)
 
@@ -531,9 +536,12 @@ def api_department_saturation(dept_id):
 
     todos_os_desvios = analise_saturacao_departamentos()
     
+    print(f"DEBUG dept_id procurado: {dept_id}")
+    print(f"DEBUG dept_ids disponíveis: {[d.get('dept_id') for d in todos_os_desvios]}")
+
     dados_alvo = None
     for d in todos_os_desvios:
-        if d.get('id') == dept_id or d.get('dept_id') == dept_id:
+        if int(d.get('dept_id', -1)) == dept_id:
             dados_alvo = d
             break
             
@@ -554,6 +562,8 @@ def api_department_saturation(dept_id):
             
     if not dados_alvo:
         return jsonify({"has_data": False})
+    
+
 
     return jsonify({
         "has_data": True,

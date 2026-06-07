@@ -1,3 +1,12 @@
+// carrega o Plotly dinamicamente se não estiver já disponível na página
+function loadPlotly(callback) {
+    if (window.Plotly) { callback(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.plot.ly/plotly-2.27.0.min.js';
+    script.onload = callback;
+    document.head.appendChild(script);
+}
+
 // inicializações
 document.addEventListener("DOMContentLoaded", function() {
     if (document.getElementById("tabela-dados")) {
@@ -192,31 +201,7 @@ function carregarRaioXHospital(hospitalId, elementoTr) {
             tdGigante.style.padding = "0"; 
             tdGigante.style.background = "#f8fafc";
 
-            let template = document.getElementById('template_raio_x');
-            if (!template) {
-                template = document.createElement('template');
-                template.id = 'template_raio_x';
-                template.innerHTML = `
-                    <div id="painel_raio_x" style="background:#f8fafc;border-radius:20px;padding:28px;border:1px solid #e2e8f0;margin:15px 10px;box-shadow:inset 0 2px 4px rgba(0,0,0,0.02);">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;">
-                            <div>
-                                <span style="background:#e0f2fe;color:#0369a1;padding:5px 12px;border-radius:6px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Filtro de Unidade Ativo</span>
-                                <h2 id="rx_hospital_title" style="margin:6px 0 0 0;color:#0f172a;font-size:1.4rem;font-weight:800;">Nome do Hospital</h2>
-                            </div>
-                            <button onclick="fecharRaioXInline()" style="background:white;border:1px solid #cbd5e1;padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:600;color:#64748b;cursor:pointer;">Fechar Raio-X</button>
-                        </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:25px;">
-                            <div style="background:white;padding:18px;border-radius:12px;border:1px solid #f1f5f9;"><p style="margin:0;font-size:0.78rem;color:#64748b;font-weight:600;">Custo Máximo p/ Intervenção</p><h4 id="kpi_rx_max" style="margin:6px 0 0 0;font-size:1.25rem;color:#ef4444;font-weight:800;">0.00 €</h4></div>
-                            <div style="background:white;padding:18px;border-radius:12px;border:1px solid #f1f5f9;"><p style="margin:0;font-size:0.78rem;color:#64748b;font-weight:600;">Custo Médio p/ Operação</p><h4 id="kpi_rx_avg" style="margin:6px 0 0 0;font-size:1.25rem;color:#3b82f6;font-weight:800;">0.00 €</h4></div>
-                            <div style="background:white;padding:18px;border-radius:12px;border:1px solid #f1f5f9;"><p style="margin:0;font-size:0.78rem;color:#64748b;font-weight:600;">Custo Mínimo de Registo</p><h4 id="kpi_rx_min" style="margin:6px 0 0 0;font-size:1.25rem;color:#10b981;font-weight:800;">0.00 €</h4></div>
-                        </div>
-                        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:25px;">
-                            <div style="background:white;padding:22px;border-radius:14px;border:1px solid #f1f5f9;"><h4 style="margin:0 0 4px 0;font-size:0.95rem;color:#0f172a;font-weight:700;">Rastreabilidade de Fluxo Financeiro (Sankey)</h4><div id="chart_rx_sankey" style="width:100%;height:320px;"></div></div>
-                            <div style="background:white;padding:22px;border-radius:14px;border:1px solid #f1f5f9;"><h4 style="margin:0 0 4px 0;font-size:0.95rem;color:#0f172a;font-weight:700;">Curva de Consumo Mensal Histórico</h4><div id="chart_rx_timeline" style="width:100%;height:320px;"></div></div>
-                        </div>
-                    </div>`;
-                document.body.appendChild(template);
-            }
+            const template = document.getElementById('template_raio_x');
             const clone = template.content.cloneNode(true);
             tdGigante.appendChild(clone);
             linhaContainerAtiva.appendChild(tdGigante);
@@ -248,9 +233,23 @@ function carregarRaioXHospital(hospitalId, elementoTr) {
             }];
             Plotly.newPlot('chart_rx_sankey', dataSankey, { font: { family: "'Inter', sans-serif", size: 10 }, margin: { t: 10, b: 10, l: 10, r: 10 } }, { responsive: true, displayModeBar: false });
 
-            const dataTimeline = [{ x: data.timeline.x, y: data.timeline.y, type: 'scatter', mode: 'lines+markers', line: { color: '#4f46e5', width: 2.5 } }];
-            Plotly.newPlot('chart_rx_timeline', dataTimeline, { font: { family: "'Inter', sans-serif" }, margin: { t: 15, b: 40, l: 55, r: 15 }, xaxis: { type: 'category' } }, { responsive: true, displayModeBar: false });
-        });
+                        const dataTimeline = [{ 
+                x: data.timeline.x, 
+                y: data.timeline.y, 
+                type: 'scatter', 
+                mode: 'lines+markers', 
+                line: { color: '#4f46e5', width: 2.5, shape: 'spline' }, 
+            }];
+
+            
+            Plotly.newPlot('chart_rx_timeline', dataTimeline, { 
+                font: { family: "'Inter', sans-serif" }, 
+                margin: { t: 15, b: 70, l: 55, r: 15 }, 
+                xaxis: { 
+                    type: 'category',                       
+                } 
+            }, { responsive: true, displayModeBar: false });
+            });
 }
 
 window.linhaSatAtiva = null;
@@ -276,23 +275,7 @@ function carregarSaturacaoDepartamento(elementoTr) {
             tdGigante.colSpan = elementoTr.cells.length;
             tdGigante.style.padding = "0";
 
-            let template = document.getElementById('template_saturacao_dept');
-            if (!template) {
-                template = document.createElement('template');
-                template.id = 'template_saturacao_dept';
-                template.innerHTML = `
-                    <div id="painel_saturacao_dept" style="background:#fff7ed;border-radius:20px;padding:28px;border:1px solid #ffedd5;margin:15px 10px;box-shadow:inset 0 2px 4px rgba(0,0,0,0.01);">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                            <div>
-                                <span style="background:#ffedd5;color:#ea580c;padding:5px 12px;border-radius:6px;font-size:0.75rem;font-weight:700;text-transform:uppercase;">Benchmark de Carga</span>
-                                <h2 id="sat_dept_title" style="margin:6px 0 0 0;color:#0f172a;font-size:1.35rem;font-weight:800;"></h2>
-                            </div>
-                            <button onclick="fecharSaturacaoInline()" style="background:white;border:1px solid #f97316;padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:600;color:#ea580c;cursor:pointer;">Fechar Análise</button>
-                        </div>
-                        <div style="background:white;padding:24px;border-radius:14px;border:1px solid #f1f5f9;"><div id="chart_sat_dept_plotly" style="width:100%;height:180px;"></div></div>
-                    </div>`;
-                document.body.appendChild(template);
-            }
+            const template = document.getElementById('template_saturacao_dept');
             tdGigante.appendChild(template.content.cloneNode(true));
             window.linhaSatAtiva.appendChild(tdGigante);
             elementoTr.parentNode.insertBefore(window.linhaSatAtiva, elementoTr.nextSibling);
@@ -306,9 +289,53 @@ function carregarSaturacaoDepartamento(elementoTr) {
                 return;
             }
 
-            Plotly.newPlot('chart_sat_dept_plotly', [{
-                x: [data.desvio_perc], y: [data.hospital_name], type: 'bar', orientation: 'h', marker: { color: '#ea580c' }
-            }], { margin: { t: 15, b: 35, l: 140, r: 60 } }, { responsive: true, displayModeBar: false });
+            const desvio = data.desvio_perc;
+            const maxEscala = Math.max(120, Math.ceil(desvio / 20) * 20 + 20);
+            const cor = desvio > 80 ? '#ef4444' : desvio > 60 ? '#f97316' : '#eab308';
+            const corFundo = desvio > 80 ? 'rgba(239,68,68,0.08)' : desvio > 60 ? 'rgba(249,115,22,0.08)' : 'rgba(234,179,8,0.08)';
+            const label = desvio > 80 ? '🔴 Crítico' : desvio > 60 ? '🟠 Elevado' : '🟡 Moderado';
+
+            Plotly.newPlot('chart_sat_dept_plotly', [
+                // zona de referência — média nacional (0%)
+                { x: [0], y: [data.hospital_name], type: 'bar', orientation: 'h', width: 0.3,
+                  marker: { color: 'rgba(100,116,139,0.15)' }, showlegend: false, hoverinfo: 'skip' },
+                // barra de fundo (escala total)
+                { x: [maxEscala], y: [data.hospital_name], type: 'bar', orientation: 'h', width: 0.25,
+                  marker: { color: 'rgba(226,232,240,0.5)' }, showlegend: false, hoverinfo: 'skip' },
+                // barra do desvio real
+                { x: [desvio], y: [data.hospital_name], type: 'bar', orientation: 'h', width: 0.25,
+                  marker: { color: cor, opacity: 0.9 },
+                  text: [`<b>+${desvio}%</b> acima da média  ${label}`],
+                  name: `Desvio vs Média Nacional`,
+                  textposition: 'outside', textfont: { size: 13, color: cor, family: "'Inter', sans-serif" },
+                  hovertemplate: `<b>${data.hospital_name}</b><br>Desvio: +${desvio}%<br>Gasto total: €${data.amount.toLocaleString('pt-PT')}<extra></extra>` }
+            ], {
+                barmode: 'overlay',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: corFundo,
+                font: { family: "'Inter', sans-serif", color: '#64748b', size: 11 },
+                margin: { t: 20, b: 45, l: 170, r: 180 },
+                xaxis: {
+                    range: [0, maxEscala],
+                    title: { text: 'Desvio % face à média nacional', font: { size: 11, color: '#94a3b8' } },
+                    ticksuffix: '%', gridcolor: 'rgba(226,232,240,0.6)', zeroline: true,
+                    zerolinecolor: '#64748b', zerolinewidth: 1.5,
+                    tickfont: { size: 10 }
+                },
+                yaxis: { tickfont: { size: 12, color: '#0f172a' }, fixedrange: true },
+                shapes: [
+                    { type: 'line', x0: 40, x1: 40, y0: -0.5, y1: 0.5,
+                      line: { color: '#94a3b8', width: 1.5, dash: 'dot' } },
+                    { type: 'line', x0: 80, x1: 80, y0: -0.5, y1: 0.5,
+                      line: { color: '#f97316', width: 1.5, dash: 'dot' } }
+                ],
+                annotations: [
+                    { x: 40, y: -0.48, text: 'limiar moderado', showarrow: false,
+                      font: { size: 9, color: '#94a3b8' }, xanchor: 'center' },
+                    { x: 80, y: -0.48, text: 'limiar crítico', showarrow: false,
+                      font: { size: 9, color: '#f97316' }, xanchor: 'center' }
+                ]
+            }, { responsive: true, displayModeBar: false });
         });
 }
 

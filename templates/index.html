@@ -31,7 +31,7 @@
                     <label style="font-weight: 600; margin-bottom: 8px; color: #475569; font-size: 0.9rem;">{{ field_name.replace('_', ' ').title() }}</label>
 
                     {% if butedit == 'disabled' %}
-                        {# MODO VISUALIZAÇÃO #}
+                        {# view mode #}
                         {% if field_name == 'hospital_id' %}
                             <input type="text" disabled value="{{ Hospital.obj[value].name if value in Hospital.obj else value }}" class="form-input-custom">
                         {% elif field_name == 'department_id' %}
@@ -45,7 +45,7 @@
                             <input type="text" disabled value="{{ value }}" class="form-input-custom">
                         {% endif %}
                     {% else %}
-                        {# MODO EDIÇÃO / INSERÇÃO #}
+                        {# edit mode #}
                         {% if field_name == 'hospital_id' %}
                             <select name="hospital_id" id="select-hospital" onchange="filtrarDepartamentos()" required class="form-input-custom">
                                 <option value="">Selecione um Hospital</option>
@@ -129,7 +129,7 @@
     </div>
 
     {% if show_list %}
-        {# 2. TRATAMENTO DE TABELAS VAZIAS #}
+        {# tabelas de listas #}
         {% if list_data %}
             <table id="tabela-dados">
                 <thead>
@@ -235,7 +235,7 @@
     {% endif %}
 </div>
 
-{# TEMPLATES INLINE PARA GRÁFICOS (Mantidos no HTML pois dependem de tags <template> nativas) #}
+
 <template id="template_raio_x">
     <div id="painel_raio_x" style="background: #f8fafc; border-radius: 20px; padding: 28px; border: 1px solid #e2e8f0; margin: 15px 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
@@ -252,7 +252,7 @@
         </div>
         <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 25px;">
             <div style="background: white; padding: 22px; border-radius: 14px; border: 1px solid #f1f5f9;"><h4 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #0f172a; font-weight: 700;">Rastreabilidade de Fluxo Financeiro (Sankey)</h4><div id="chart_rx_sankey" style="width: 100%; height: 320px;"></div></div>
-            <div style="background: white; padding: 22px; border-radius: 14px; border: 1px solid #f1f5f9;"><h4 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #0f172a; font-weight: 700;">Curva de Consumo Mensal Histórico</h4><div id="chart_rx_timeline" style="width: 100%; height: 320px;"></div></div>
+            <div style="background: white; padding: 22px; border-radius: 14px; border: 1px solid #f1f5f9;"><h4 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #0f172a; font-weight: 700;">Evolução da Curva de Consumo Trimestral</h4><div id="chart_rx_timeline" style="width: 100%; height: 320px;"></div></div>
         </div>
     </div>
 </template>
@@ -260,7 +260,7 @@
 <template id="template_saturacao_dept">
     <div id="painel_saturacao_dept" style="background: #fff7ed; border-radius: 20px; padding: 28px; border: 1px solid #ffedd5; margin: 15px 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <div><span style="background: #ffedd5; color: #ea580c; padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Benchmark de Carga</span><h2 id="sat_dept_title" style="margin: 6px 0 0 0; color: #0f172a; font-size: 1.35rem; font-weight: 800;"></h2></div>
+            <div><span style="background: #ffedd5; color: #ea580c; padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Estado do Departamento</span><h2 id="sat_dept_title" style="margin: 6px 0 0 0; color: #0f172a; font-size: 1.35rem; font-weight: 800;"></h2></div>
             <button onclick="fecharSaturacaoInline()" style="background: white; border: 1px solid #f97316; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; color: #ea580c; cursor: pointer;">Fechar Análise</button>
         </div>
         <div style="background: white; padding: 24px; border-radius: 14px; border: 1px solid #f1f5f9;"><div id="chart_sat_dept_plotly" style="width: 100%; height: 180px;"></div></div>
