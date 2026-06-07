@@ -233,7 +233,7 @@
         </div>
         <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 25px;">
             <div style="background: white; padding: 22px; border-radius: 14px; border: 1px solid #f1f5f9;"><h4 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #0f172a; font-weight: 700;">Rastreabilidade de Fluxo Financeiro (Sankey)</h4><div id="chart_rx_sankey" style="width: 100%; height: 320px;"></div></div>
-            <div style="background: white; padding: 22px; border-radius: 14px; border: 1px solid #f1f5f9;"><h4 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #0f172a; font-weight: 700;">Curva de Consumo Mensal Histórico</h4><div id="chart_rx_timeline" style="width: 100%; height: 320px;"></div></div>
+            <div style="background: white; padding: 22px; border-radius: 14px; border: 1px solid #f1f5f9;"><h4 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #0f172a; font-weight: 700;">Evolução da Curva de Consumo Trimestral</h4><div id="chart_rx_timeline" style="width: 100%; height: 320px;"></div></div>
         </div>
     </div>
 </template>
@@ -241,7 +241,7 @@
 <template id="template_saturacao_dept">
     <div id="painel_saturacao_dept" style="background: #fff7ed; border-radius: 20px; padding: 28px; border: 1px solid #ffedd5; margin: 15px 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <div><span style="background: #ffedd5; color: #ea580c; padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Benchmark de Carga</span><h2 id="sat_dept_title" style="margin: 6px 0 0 0; color: #0f172a; font-size: 1.35rem; font-weight: 800;"></h2></div>
+            <div><span style="background: #ffedd5; color: #ea580c; padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">desvio por departamento</span><h2 id="sat_dept_title" style="margin: 6px 0 0 0; color: #0f172a; font-size: 1.35rem; font-weight: 800;"></h2></div>
             <button onclick="fecharSaturacaoInline()" style="background: white; border: 1px solid #f97316; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; color: #ea580c; cursor: pointer;">Fechar Análise</button>
         </div>
         <div style="background: white; padding: 24px; border-radius: 14px; border: 1px solid #f1f5f9;"><div id="chart_sat_dept_plotly" style="width: 100%; height: 180px;"></div></div>
