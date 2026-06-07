@@ -6,6 +6,9 @@ Created on Sat Apr 25 16:19:29 2026
 #Revisto por: Pedro
 
 from classes.gclass import Gclass
+from classes.hospital import Hospital
+from classes.department import Department
+from classes.device import Device
 import datetime
 
 class Utilization(Gclass):

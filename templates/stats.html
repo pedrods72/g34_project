@@ -1,135 +1,70 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: white; padding: 20px 28px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01), 0 2px 4px -1px rgba(0,0,0,0.01); border: 1px solid #f1f5f9;">
+<div class="analytics-header">
     <div>
-        <h1 style="margin: 0; font-size: 1.6rem; color: #0f172a; font-weight: 800; letter-spacing: -0.025em;">Plataforma Analítica Orçamental</h1>
-        <p style="color: #64748b; margin: 4px 0 0 0; font-size: 0.88rem;">Monitorização avançada de custos, desvios e volatilidade operacional.</p>
+        <h1>Consola de Análise Avançada</h1>
     </div>
-    <div style="font-size: 0.85rem; font-weight: 600; color: #475569; background: #f8fafc; padding: 10px 16px; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 8px;">
-        <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
-        Utilizador: <span style="color: #0f172a; font-weight: 700;">{{ ulogin }}</span>
+    
+    <div class="threshold-pill-box">
+        <span class="threshold-label">Threshold Pareto:</span>
+        <button id="btn-95" onclick="alterarMetaOrcamento(0.95, this)" class="threshold-btn active">95%</button>
+        <button id="btn-80" onclick="alterarMetaOrcamento(0.80, this)" class="threshold-btn">80%</button>
+        <button id="btn-60" onclick="alterarMetaOrcamento(0.60, this)" class="threshold-btn">60%</button>
     </div>
 </div>
 
-<div style="display: flex; flex-direction: column; gap: 30px; margin-bottom: 35px;">
+<div class="analytics-layout-grid">
     
-    <div style="background: white; padding: 26px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); border: 1px solid #f1f5f9;">
-        <div style="margin-bottom: 20px;">
-            <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 700;">1. Evolução Histórica e Tendências Macro</h3>
-            <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: #64748b;">Análise comparativa do gasto global consolidado vs. segmentos líderes do ecossistema hospitalar.</p>
+    <div class="analytics-card">
+        <div class="analytics-card-header">
+            <div>
+                <h3>1. Monitorização de Escala: Encargo Global vs Custo por Utilização</h3>
+            </div>
+            <div class="scale-badge-container">
+                <span class="scale-badge" style="color: var(--text-slate);">
+                    <span class="scale-dot" style="background: var(--text-slate);"></span> Eixo Esquerdo: Gasto Total (€)
+                </span>
+                <span class="scale-badge" style="color: var(--primary);">
+                    <span class="scale-dot" style="background: var(--primary);"></span> Eixo Direito: Custo Unitário (€/Uso)
+                </span>
+            </div>
         </div>
-        <div id="chart_macro_dual" style="width: 100%; height: 360px;"></div>
+        <div id="chart_macro_dual" style="width: 100%; height: 340px;"></div>
     </div>
 
-    <div style="background: white; padding: 26px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); border: 1px solid #f1f5f9;">
-        <div style="margin-bottom: 20px;">
-            <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 700;">2. Janela de Volatilidade e Dispersão Hospitalar</h3>
-            <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: #64748b;">Mapeamento das margens limite (Teto/Chão) registadas em cada mês contrapostas à despesa média real.</p>
-        </div>
-        <div id="chart_volatilidade_bandas" style="width: 100%; height: 360px;"></div>
+    <div class="analytics-card">
+        <h3>2. Margem de Flutuação e Dispersão Orçamental Hospitalar</h3>
+        <div id="chart_volatilidade_bandas" style="width: 100%; height: 340px;"></div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px;">
-        
-        <div style="background: white; padding: 26px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); border: 1px solid #f1f5f9;">
-            <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 700;">3. Alocação por Tipo de Dispositivo</h3>
-            <p style="margin: 4px 0 15px 0; font-size: 0.82rem; color: #64748b;">Análise Pareto com opacidade dinâmica baseada no desvio orçamental.</p>
+    <div class="analytics-row-asymmetric">
+        <div class="analytics-card">
+            <h3>3. Alocação por Categoria de Equipamento (Pareto)</h3>
             <div id="chart_devices_clean" style="width: 100%; height: 340px;"></div>
         </div>
 
-        <div style="background: white; padding: 26px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); border: 1px solid #f1f5f9;">
-            <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 700;">4. Correlação: Volume de Atividade vs Encargos</h3>
-            <p style="margin: 4px 0 15px 0; font-size: 0.82rem; color: #64748b;">Identificação de anomalias operacionais e eficiência volumétrica.</p>
+        <div class="analytics-card">
+            <h3>4. Análise de Eficiência: Volume vs Encargos</h3>
             <div id="chart_scatter_clean" style="width: 100%; height: 340px;"></div>
         </div>
-        
     </div>
+    
 </div>
 
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script>
-const c1Data = {{ chart1 | tojson if chart1 else '[]' }};
-const c2Data = {{ chart2 | tojson if chart2 else '[]' }};
-const pareto = {{ pareto | tojson if pareto else '[]' }};
-const custoVolume = {{ custo_volume | tojson if custo_volume else '[]' }};
-
-// Estilo Base Elegante (Espaçamento frouxo e fontes legíveis)
-const baseLayoutStyles = {
-    font: { family: "'Inter', sans-serif", color: '#64748b' },
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
-    margin: { t: 20, b: 60, l: 65, r: 65 },
-    xaxis: { gridcolor: '#f8fafc', zeroline: false, type: 'category', linecolor: '#e2e8f0', tickangle: -45, font: { size: 10 } },
-    legend: { orientation: 'h', y: -0.25, x: 0.5, xanchor: 'center', font: { size: 10 } }
-};
-
-// --- CONFIGURAÇÃO GRÁFICO 1 ---
-if (c1Data.length > 0) {
-    const xLabels = c1Data.map(d => d.period);
-    Plotly.newPlot('chart_macro_dual', [
-        { x: xLabels, y: c1Data.map(d => d.total), type: 'scatter', mode: 'lines+markers', name: 'Gasto Global Sistema', line: { color: '#0f172a', width: 2.5 }, marker: { size: 4 }, yaxis: 'y1', hovertemplate: 'Global: %{y:,.2f} €<extra></extra>' },
-        { x: xLabels, y: c1Data.map(d => d.dept_leader), type: 'scatter', mode: 'lines', name: 'Dept Líder: "{{ top_dept_label }}"', line: { color: '#3b82f6', width: 2, dash: 'dash' }, yaxis: 'y2', hovertemplate: 'Dept: %{y:,.2f} €<extra></extra>' },
-        { x: xLabels, y: c1Data.map(d => d.device_leader), type: 'scatter', mode: 'lines', name: 'Cat Líder: "{{ top_device_label }}"', line: { color: '#10b981', width: 2, dash: 'dot' }, yaxis: 'y2', hovertemplate: 'Cat: %{y:,.2f} €<extra></extra>' }
-    ], {
-        ...baseLayoutStyles,
-        yaxis: { title: { text: 'Encargos Globais (€)', font: { size: 11, weight: 600 } }, gridcolor: '#f1f5f9', zeroline: false },
-        yaxis2: { title: { text: 'Segmentação de Líderes (€)', font: { size: 11, weight: 600 } }, overlaying: 'y', side: 'right', zeroline: false, gridcolor: 'rgba(0,0,0,0)' }
-    }, { responsive: true, displayModeBar: false });
-}
-
-// --- CONFIGURAÇÃO GRÁFICO 2 ---
-if (c2Data.length > 0) {
-    const xLabels = c2Data.map(d => d.period);
-    Plotly.newPlot('chart_volatilidade_bandas', [
-        { x: xLabels, y: c2Data.map(d => d.min_val), type: 'scatter', mode: 'lines', name: 'Mínimo Absoluto', line: { width: 0 }, text: c2Data.map(d => d.min_name), hovertemplate: 'Chão: %{text} (%{y:,.2f} €)', showlegend: false },
-        { x: xLabels, y: c2Data.map(d => d.max_val), type: 'scatter', mode: 'lines', name: 'Dispersão Extrema da Rede', fill: 'tonexty', fillcolor: 'rgba(59, 130, 246, 0.6)', line: { width: 0 }, text: c2Data.map(d => d.max_name), hovertemplate: 'Teto: %{text} (%{y:,.2f} €)' },
-        { x: xLabels, y: c2Data.map(d => d.avg), type: 'scatter', mode: 'lines+markers', name: 'Custo Médio Hospitalar', line: { color: '#4f46e5', width: 2.5 }, marker: { size: 5 }, hovertemplate: 'Média Unidades: %{y:,.2f} €' }
-    ], baseLayoutStyles, { responsive: true, displayModeBar: false });
-}
-
-// --- CONFIGURAÇÃO GRÁFICO 3 (PRESERVADO) ---
-if (pareto.length > 0) {
-    const devLabels = pareto.map(d => d.category);
-    const devValues = pareto.map(d => d.cost);
-    const maxValue = Math.max(...devValues);
-    const minValue = Math.min(...devValues);
-    const valorLinhaAlvo = 0.9 * maxValue;
-
-    const coresCondicionais = devValues.map(valor => {
-        const rácio = maxValue === minValue ? 1 : (valor - minValue) / (maxValue - minValue);
-        const opacidade = 0.35 + rácio * 0.65;
-        return valor > valorLinhaAlvo ? `rgba(239, 68, 68, ${opacidade})` : `rgba(16, 185, 129, ${opacidade})`;
-    });
-
-    Plotly.newPlot('chart_devices_clean', [
-        { type: 'bar', orientation: 'h', x: devValues, y: devLabels, marker: { color: coresCondicionais }, hovertemplate: 'Gasto: %{x:,.2f} €<extra></extra>' }
-    ], {
-        ...baseLayoutStyles,
-        margin: { t: 10, b: 40, l: 100, r: 20 },
-        xaxis: { ...baseLayoutStyles.xaxis, type: 'linear', tickangle: 0 },
-        yaxis: { type: 'category', autorange: 'reversed', gridcolor: 'rgba(0,0,0,0)' },
-        shapes: [{ type: 'line', xref: 'x', yref: 'paper', x0: valorLinhaAlvo, x1: valorLinhaAlvo, y0: 0, y1: 1, line: { color: '#0f172a', width: 1.5, dash: 'dot' }, opacity: 0.7 }]
-    }, { responsive: true, displayModeBar: false });
-}
-
-// --- CONFIGURAÇÃO GRÁFICO 4 (PRESERVADO) ---
-if (custoVolume.length > 0) {
-    Plotly.newPlot('chart_scatter_clean', [{
-        x: custoVolume.map(v => parseInt(v.num_utilizacoes) || 0),
-        y: custoVolume.map(v => parseFloat(v.custo_total) || 0),
-        mode: 'markers',
-        type: 'scatter',
-        text: custoVolume.map(v => v.hospital_name),
-        marker: { size: 9, color: 'rgba(139, 92, 246, 0.15)', line: { color: '#8b5cf6', width: 1.5 } },
-        hovertemplate: '<b>%{text}</b><br>Utilizações: %{x}<br>Custos: %{y:,.2f} €<extra></extra>'
-    }], {
-        ...baseLayoutStyles,
-        margin: { t: 10, b: 40, l: 65, r: 20 },
-        xaxis: { type: 'linear', tickangle: 0, title: { text: 'Volume de Intervenções (Registos)', font: { size: 10 } } },
-        yaxis: { type: 'linear', gridcolor: '#f1f5f9' }
-    }, { responsive: true, displayModeBar: false });
-}
+document.addEventListener("DOMContentLoaded", function() {
+    const c1Data = {{ chart1 | tojson if chart1 else '[]' }};
+    const c2Data = {{ chart2 | tojson if chart2 else '[]' }};
+    const pareto = {{ pareto | tojson if pareto else '[]' }};
+    const custoVolume = {{ custo_volume | tojson if custo_volume else '[]' }};
+    const paretoAvg = {{ pareto_avg | default(0) }};
+    const paretoMedian = {{ pareto_median | default(0) }};
+    
+    // Altera a chamada da função para incluir os dois novos parâmetros no fim:
+    inicializarGraficosStats(c1Data, c2Data, pareto, custoVolume, paretoAvg, paretoMedian);
+});
 </script>
 
 {% endblock %}

@@ -5,29 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Gclass System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        
+        .dropdown {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+       
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: #1e293b; 
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            border-radius: 6px;
+            z-index: 1000;
+            margin-top: 5px;
+            border: 1px solid #334155;
+            overflow: hidden;
+        }
+
+        
+        .dropdown-content a {
+            color: #94a3b8 !important; 
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+            text-align: left;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        
+        .dropdown-content a:hover {
+            background-color: #334155;
+            color: #ffffff !important;
+        }
+
+        
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        
+        .dropdown .nav-link {
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+    </style>
 </head>
 <body>
     <header class="topbar">
     <div class="logo">
-        <h2>Hospital Management</h2>
+        <a href="/stats" style="text-decoration: none; color: inherit;">
+            <h2 style="margin: 0; cursor: pointer;">Hospital Management</h2>
+        </a>
     </div>
     
     <nav>
         {%if ulogin %}
-         <a href="/stats" class="nav-link">Dashboard</a>
          <a href="/index?class=Hospital&option=first" class="nav-link">Hospitais</a>
          <a href="/index?class=Department&option=first" class="nav-link">Departamentos</a>
          <a href="/index?class=Device&option=first" class="nav-link">Dispositivos</a>
          <a href="/index?class=Utilization&option=first" class="nav-link">Utilizações</a>
-         <a href="/index?class=Userlogin&option=first" class="nav-link">User: {{ ulogin }}</a>
-         <a href="/logoff" class="nav-link">Logout</a>
+         
+         <div class="dropdown">
+             <a class="nav-link">User: {{ ulogin }} <small>▼</small></a>
+             <div class="dropdown-content">
+                 <a href="/index?class=Userlogin&option=first">Gerir Conta</a>
+                 <a href="/logoff" style="color: #f87171 !important; border-top: 1px solid #334155;">Logout</a>
+             </div>
+         </div>
         {% else %}
-         <a href="/login" class="nav-link">Login</a>
+         <a href="/" class="nav-link">Página inicial</a>
         {% endif %}
-
     </nav>
-</header>
+    </header>
 
     <div class="main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -44,4 +104,3 @@
     </div>
 </body>
 </html>
-

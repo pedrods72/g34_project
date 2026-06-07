@@ -264,3 +264,177 @@ Página inicial
     max-width:600px;
 }
 }
+
+.filtrado-escondido {
+    display: none !important;
+}
+
+/* Efeito visual de contorno ligeiramente azulado no modo de edição (Cumpre o Ponto 4 do Plano) */
+.form-input-custom:focus:not([disabled]):not([readonly]) {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    outline: none;
+    background-color: #f8fafc;
+}
+
+/* ==========================================================================
+   Módulos Analíticos Avançados (Estilo Dashboard SaaS Hospitalar)
+   ========================================================================== */
+
+:root {
+    --border-subtle: #e2e8f0;
+    --text-muted: #64748b;
+    --text-slate: #0f172a;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+}
+
+/* Cabeçalho da Consola */
+.analytics-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 32px; 
+    padding: 0 4px;
+}
+
+.analytics-header h1 {
+    margin: 0; 
+    font-size: 1.5rem; 
+    color: var(--text-slate); 
+    font-weight: 700; 
+    letter-spacing: -0.025em;
+}
+
+/* Controlos e Segmentação de Filtros */
+.threshold-pill-box {
+    display: flex; 
+    align-items: center; 
+    gap: 6px; 
+    background: #f1f5f9; 
+    padding: 4px; 
+    border-radius: 8px;
+}
+
+.threshold-label {
+    font-size: 0.75rem; 
+    font-weight: 600; 
+    color: var(--text-muted); 
+    padding: 0 8px; 
+    text-transform: uppercase; 
+    letter-spacing: 0.05em;
+}
+
+.threshold-btn {
+    background: transparent; 
+    border: none; 
+    padding: 6px 12px; 
+    border-radius: 6px; 
+    font-size: 0.75rem; 
+    font-weight: 600; 
+    color: var(--text-muted); 
+    cursor: pointer; 
+    transition: all 0.2s ease;
+}
+
+.threshold-btn.active {
+    background: var(--white); 
+    color: var(--text-slate); 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Contentores e Grelhas Modernas */
+.analytics-layout-grid {
+    display: flex; 
+    flex-direction: column; 
+    gap: 32px; 
+    margin-bottom: 48px;
+}
+
+.analytics-row-split {
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); 
+    gap: 24px;
+}
+
+.analytics-row-asymmetric {
+    display: grid; 
+    grid-template-columns: 1.2fr 1fr; 
+    gap: 24px;
+}
+
+/* Cartões de Gráficos Minimalistas */
+.analytics-card {
+    background: var(--white); 
+    padding: 24px; 
+    border-radius: 12px; 
+    border: 1px solid var(--border-subtle); 
+    box-shadow: var(--shadow-sm);
+}
+
+.analytics-card-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-start; 
+    margin-bottom: 16px;
+}
+
+.analytics-card h3 {
+    margin: 0; 
+    font-size: 0.9rem; 
+    color: var(--text-slate); 
+    font-weight: 600; 
+    text-transform: uppercase; 
+    letter-spacing: 0.05em;
+}
+
+/* Badges Informativos de Escala */
+.scale-badge-container {
+    display: flex; 
+    gap: 16px; 
+    font-size: 0.8rem; 
+    font-weight: 500;
+}
+
+.scale-badge {
+    display: flex; 
+    align-items: center; 
+    gap: 6px;
+}
+
+.scale-dot {
+    width: 8px; 
+    height: 8px; 
+    border-radius: 50%;
+}
+
+
+/* Classes de largura e comportamento de colunas */
+.col-id {
+    width: 80px;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: left;
+}
+
+.col-text {
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.col-numeric {
+    text-align: right;
+    font-variant-numeric: tabular-nums; /* Mantém os números perfeitamente verticais */
+}
+
+.col-actions {
+    width: 120px;
+    text-align: center;
+}
+
+/* Sincronização explícita de alinhamentos entre TH e TD */
+table th.col-id, table td.col-id { text-align: left; }
+table th.col-text, table td.col-text { text-align: left; }
+table th.col-numeric, table td.col-numeric { text-align: right; }
+table th.col-actions, table td.col-actions { text-align: center; }

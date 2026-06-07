@@ -20,7 +20,6 @@
                         {% for a in attributes %}
                             <option value="{{ a }}" {{ 'selected' if a == att }}>{{ a.replace('_', ' ').title() }}</option>
                         {% endfor %}
-                        {# Opção extra para pesquisa específica de Utilização #}
                         {% if class_name == 'Utilization' %}
                             <option value="hospital_name" {{ 'selected' if att == 'hospital_name' }}>Hospital Name</option>
                         {% endif %}
@@ -98,7 +97,7 @@
         <span style="color:#3b82f6; font-size:1.05rem;">{{ results|length }}</span> resultado(s) encontrado(s)
     </p>
     <div style="overflow-x:auto;">
-        <table>
+        <table id="tabela-dados">
             <thead>
                 <tr>
                     {% for a in attributes %}
@@ -107,15 +106,14 @@
                 </tr>
             </thead>
             <tbody>
-                {% set limite = (per_page | int) if per_page else 10 %}
-                {% for obj in results[:limite] %}
+                {% for obj in results %}
                 <tr>
                     {% for a in attributes %}
                         <td>
                             {% if a == 'department_id' %}
-                                {{ obj.department_name }}
+                                {{ obj.department_id }}
                             {% elif a == 'device_id' %}
-                                {{ obj.device_name }}
+                                {{ obj.device_id }}
                             {% elif a == 'hospital_name' %}
                                 {{ obj.hospital_name }}
                             {% else %}
@@ -128,6 +126,8 @@
             </tbody>
         </table>
     </div>
+
+    <div id="paginacao-container" style="display:flex; gap:5px; margin-top:15px; justify-content:center;"></div>
 </div>
 {% elif value %}
 <div class="card" style="text-align:center; padding:50px; color:#94a3b8;">
@@ -138,7 +138,8 @@
 {% endif %}
 
 <script>
-    // Script mantido igual...
+    window.APP_ATTRIBUTES = {{ attributes | tojson if attributes else [] }};
+    window.LINHAS_POR_PAGINA = parseInt("{{ per_page if per_page else 10 }}");
 </script>
 
 {% endblock %}
