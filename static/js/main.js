@@ -192,7 +192,31 @@ function carregarRaioXHospital(hospitalId, elementoTr) {
             tdGigante.style.padding = "0"; 
             tdGigante.style.background = "#f8fafc";
 
-            const template = document.getElementById('template_raio_x');
+            let template = document.getElementById('template_raio_x');
+            if (!template) {
+                template = document.createElement('template');
+                template.id = 'template_raio_x';
+                template.innerHTML = `
+                    <div id="painel_raio_x" style="background:#f8fafc;border-radius:20px;padding:28px;border:1px solid #e2e8f0;margin:15px 10px;box-shadow:inset 0 2px 4px rgba(0,0,0,0.02);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;">
+                            <div>
+                                <span style="background:#e0f2fe;color:#0369a1;padding:5px 12px;border-radius:6px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Filtro de Unidade Ativo</span>
+                                <h2 id="rx_hospital_title" style="margin:6px 0 0 0;color:#0f172a;font-size:1.4rem;font-weight:800;">Nome do Hospital</h2>
+                            </div>
+                            <button onclick="fecharRaioXInline()" style="background:white;border:1px solid #cbd5e1;padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:600;color:#64748b;cursor:pointer;">Fechar Raio-X</button>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:25px;">
+                            <div style="background:white;padding:18px;border-radius:12px;border:1px solid #f1f5f9;"><p style="margin:0;font-size:0.78rem;color:#64748b;font-weight:600;">Custo Máximo p/ Intervenção</p><h4 id="kpi_rx_max" style="margin:6px 0 0 0;font-size:1.25rem;color:#ef4444;font-weight:800;">0.00 €</h4></div>
+                            <div style="background:white;padding:18px;border-radius:12px;border:1px solid #f1f5f9;"><p style="margin:0;font-size:0.78rem;color:#64748b;font-weight:600;">Custo Médio p/ Operação</p><h4 id="kpi_rx_avg" style="margin:6px 0 0 0;font-size:1.25rem;color:#3b82f6;font-weight:800;">0.00 €</h4></div>
+                            <div style="background:white;padding:18px;border-radius:12px;border:1px solid #f1f5f9;"><p style="margin:0;font-size:0.78rem;color:#64748b;font-weight:600;">Custo Mínimo de Registo</p><h4 id="kpi_rx_min" style="margin:6px 0 0 0;font-size:1.25rem;color:#10b981;font-weight:800;">0.00 €</h4></div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:25px;">
+                            <div style="background:white;padding:22px;border-radius:14px;border:1px solid #f1f5f9;"><h4 style="margin:0 0 4px 0;font-size:0.95rem;color:#0f172a;font-weight:700;">Rastreabilidade de Fluxo Financeiro (Sankey)</h4><div id="chart_rx_sankey" style="width:100%;height:320px;"></div></div>
+                            <div style="background:white;padding:22px;border-radius:14px;border:1px solid #f1f5f9;"><h4 style="margin:0 0 4px 0;font-size:0.95rem;color:#0f172a;font-weight:700;">Curva de Consumo Mensal Histórico</h4><div id="chart_rx_timeline" style="width:100%;height:320px;"></div></div>
+                        </div>
+                    </div>`;
+                document.body.appendChild(template);
+            }
             const clone = template.content.cloneNode(true);
             tdGigante.appendChild(clone);
             linhaContainerAtiva.appendChild(tdGigante);
@@ -252,7 +276,23 @@ function carregarSaturacaoDepartamento(elementoTr) {
             tdGigante.colSpan = elementoTr.cells.length;
             tdGigante.style.padding = "0";
 
-            const template = document.getElementById('template_saturacao_dept');
+            let template = document.getElementById('template_saturacao_dept');
+            if (!template) {
+                template = document.createElement('template');
+                template.id = 'template_saturacao_dept';
+                template.innerHTML = `
+                    <div id="painel_saturacao_dept" style="background:#fff7ed;border-radius:20px;padding:28px;border:1px solid #ffedd5;margin:15px 10px;box-shadow:inset 0 2px 4px rgba(0,0,0,0.01);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                            <div>
+                                <span style="background:#ffedd5;color:#ea580c;padding:5px 12px;border-radius:6px;font-size:0.75rem;font-weight:700;text-transform:uppercase;">Benchmark de Carga</span>
+                                <h2 id="sat_dept_title" style="margin:6px 0 0 0;color:#0f172a;font-size:1.35rem;font-weight:800;"></h2>
+                            </div>
+                            <button onclick="fecharSaturacaoInline()" style="background:white;border:1px solid #f97316;padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:600;color:#ea580c;cursor:pointer;">Fechar Análise</button>
+                        </div>
+                        <div style="background:white;padding:24px;border-radius:14px;border:1px solid #f1f5f9;"><div id="chart_sat_dept_plotly" style="width:100%;height:180px;"></div></div>
+                    </div>`;
+                document.body.appendChild(template);
+            }
             tdGigante.appendChild(template.content.cloneNode(true));
             window.linhaSatAtiva.appendChild(tdGigante);
             elementoTr.parentNode.insertBefore(window.linhaSatAtiva, elementoTr.nextSibling);

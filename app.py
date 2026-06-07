@@ -18,6 +18,11 @@ import pandas as pd
 from functools import wraps
 
 appy = Flask(__name__)
+appy.jinja_env.globals.update(
+    Hospital=Hospital,
+    Department=Department,
+    Device=Device
+)
 appy.config["TEMPLATES_AUTO_RELOAD"] = True          # reload automático de templates
 appy.secret_key = 'CHAVE_SECRETA_HOSPITAL'
 appy.jinja_env.globals['getattr'] = getattr          # getattr disponível nos templates Jinja
