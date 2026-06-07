@@ -110,15 +110,7 @@
                 <tr>
                     {% for a in attributes %}
                         <td>
-                            {% if a == 'department_id' %}
-                                {{ obj.department_id }}
-                            {% elif a == 'device_id' %}
-                                {{ obj.device_id }}
-                            {% elif a == 'hospital_name' %}
-                                {{ obj.hospital_name }}
-                            {% else %}
-                                {{ getattr(obj, '_' + a) if hasattr(obj, '_' + a) else getattr(obj, a) }}
-                            {% endif %}
+                            {{ getattr(obj, '_' + a) if hasattr(obj, '_' + a) else getattr(obj, a) }}
                         </td>
                     {% endfor %}
                 </tr>

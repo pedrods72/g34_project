@@ -397,8 +397,10 @@ def search():
     if cls is None: return redirect('/')
 
     attributes = [a[1:] for a in cls.att[1:]]
+
     # adicionar nomes para selecionar na pesquisa
     if class_name == 'Utilization':
+        attributes = [a for a in attributes if a not in ['department_id', 'device_id']]
         attributes.extend(['department_name', 'device_name', 'hospital_name'])
 
     atts = request.args.getlist('att[]')
