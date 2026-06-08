@@ -14,15 +14,15 @@ class Userlogin(Gclass):
     pos = 0
     sortkey = ''
     # class attributes, identifier attribute '_id' must be the first one on the list
-    att = ['_id', '_user','_usergroup','_password']
+    att = ['_id', '_user', '_usergroup', '_password', '_hospital_id', '_department_id']
     # Class header title
     header = 'Users'
     # field description for use in, for example, in input form
-    des = ['Id', 'User','User group','Password']
+    des = ['Id', 'User', 'User group', 'Password', 'Hospital Id', 'Department Id']
     username = ''
     user_id = 0
     # Constructor: Called when an object is instantiated
-    def __init__(self, id, user, usergroup, password):
+    def __init__(self, id, user, usergroup, password, hospital_id=None, department_id=None):
         super().__init__()
         # Object attributes
         id = Userlogin.get_id(id)
@@ -30,18 +30,23 @@ class Userlogin(Gclass):
         self._user = user
         self._usergroup = usergroup
         self._password = password
+        self._hospital_id = int(hospital_id) if hospital_id not in (None, '', 'None') else None
+        self._department_id = int(department_id) if department_id not in (None, '', 'None') else None
         # Add the new object to the dictionary of objects
         Userlogin.obj[id] = self
         # Add the code to the list of object codes
         Userlogin.lst.append(id)
+
     # id property getter method
     @property
     def id(self):
         return self._id
+
     # user property getter method
     @property
     def user(self):
         return self._user
+
     # usergroup property getter method
     @property
     def usergroup(self):
@@ -49,6 +54,7 @@ class Userlogin(Gclass):
     @usergroup.setter
     def usergroup(self, usergroup):
         self._usergroup = usergroup
+
     # password property
     @property
     def password(self):
@@ -57,6 +63,22 @@ class Userlogin(Gclass):
     def password(self, password):
         self._password = password
 
+    # hospital_id property
+    @property
+    def hospital_id(self):
+        return self._hospital_id
+    @hospital_id.setter
+    def hospital_id(self, hospital_id):
+        self._hospital_id = hospital_id
+
+    # department_id property
+    @property
+    def department_id(self):
+        return self._department_id
+    @department_id.setter
+    def department_id(self, department_id):
+        self._department_id = department_id
+
     @classmethod
     def get_user_id(cls, user):
         user_id = 0
@@ -64,18 +86,19 @@ class Userlogin(Gclass):
         if len(lsobj) == 1:
             obj = lsobj[0]
             user_id = obj.id
-        return user_id            
+        return user_id
+
     @classmethod
     def chk_password(cls, user, password):
         Userlogin.username = ''
         user_id = Userlogin.get_user_id(user)
         if user_id != 0:
             obj = Userlogin.obj[user_id]
-            
+
             # Verificação defensiva: se não começar com o formato do bcrypt, é texto limpo
             if not (obj._password.startswith('$2a$') or obj._password.startswith('$2b$')):
                 return 'Wrong password (stored in plain text)'
-            
+
             try:
                 valid = bcrypt.checkpw(password.encode(), obj._password.encode())
                 if valid:
@@ -90,15 +113,14 @@ class Userlogin(Gclass):
         else:
             message = 'No existent user'
         return message
-    
+
     @classmethod
     def set_password(cls, password):
         # 1. Encripta a password (gera o salt automaticamente) -> devolve bytes
         hashed_bytes = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
-        
+
         # 2. Converte os bytes para string (UTF-8) para guardar na Base de Dados
         return hashed_bytes.decode()
-    
+
     def __str__(self):
         return f'Id:{self.id}, User:{self.user}, Usergroup:{self.usergroup}'
-    

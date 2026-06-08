@@ -1,7 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
 
-
 <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
         <h1 style="margin: 0;">{{ header }}</h1>
@@ -33,14 +32,14 @@
                     {% if butedit == 'disabled' %}
                         {# view mode #}
                         {% if field_name == 'hospital_id' %}
-                            <input type="text" disabled value="{{ Hospital.obj[value].name if value in Hospital.obj else value }}" class="form-input-custom">
+                            <input type="text" disabled value="{{ Hospital.obj[value|int].name if value|int in Hospital.obj else value }}" class="form-input-custom">
                         {% elif field_name == 'department_id' %}
                             <div style="display: flex; gap: 10px; width: 100%;">
-                                <input type="text" disabled value="{{ Hospital.obj[Department.obj[value].hospital_id].name if value in Department.obj else 'Hospital s/ Nome' }}" class="form-input-custom" style="flex: 1;">
-                                <input type="text" disabled value="{{ Department.obj[value].title if value in Department.obj else value }}" class="form-input-custom" style="flex: 1;">
+                                <input type="text" disabled value="{{ Hospital.obj[Department.obj[value|int].hospital_id].name if value|int in Department.obj else 'Hospital s/ Nome' }}" class="form-input-custom" style="flex: 1;">
+                                <input type="text" disabled value="{{ Department.obj[value|int].title if value|int in Department.obj else value }}" class="form-input-custom" style="flex: 1;">
                             </div>
                         {% elif field_name == 'device_id' %}
-                            <input type="text" disabled value="{{ Device.obj[value].category if value in Device.obj else value }}" class="form-input-custom">
+                            <input type="text" disabled value="{{ Device.obj[value|int].category if value|int in Device.obj else value }}" class="form-input-custom">
                         {% else %}
                             <input type="text" disabled value="{{ value }}" class="form-input-custom">
                         {% endif %}
@@ -175,7 +174,7 @@
                             {% elif class_name == 'Department' %}
                                 <td class="col-text">{{ row['title'] }}</td>
                                 <td class="col-text">
-                                    {{ Hospital.obj[row['hospital_id']].name if row['hospital_id'] in Hospital.obj else 'Hospital Desconhecido' }}
+                                    {{ Hospital.obj[row['hospital_id']|int].name if row['hospital_id']|int in Hospital.obj else 'Hospital Desconhecido' }}
                                 </td>
                             
                             {% elif class_name == 'Device' %}
@@ -184,19 +183,19 @@
                             {% elif class_name == 'Utilization' %}
                                 <td class="col-text">{{ row['utilization_date'] }}</td>
                                 <td class="col-text">
-                                    {% set dept_id = row['department_id'] %}
+                                    {% set dept_id = row['department_id']|int %}
                                     {% if dept_id in Department.obj %}
-                                        {% set hosp_id = Department.obj[dept_id].hospital_id %}
+                                        {% set hosp_id = Department.obj[dept_id].hospital_id|int %}
                                         {{ Hospital.obj[hosp_id].name if hosp_id in Hospital.obj else 'Hospital s/ Nome' }}
                                     {% else %}
                                         Hospital Não Encontrado
                                     {% endif %}
                                 </td>
                                 <td class="col-text">
-                                    {{ Department.obj[row['department_id']].title if row['department_id'] in Department.obj else 'Depto. Não Encontrado' }}
+                                    {{ Department.obj[row['department_id']|int].title if row['department_id']|int in Department.obj else 'Depto. Não Encontrado' }}
                                 </td>
                                 <td class="col-text">
-                                    {{ Device.obj[row['device_id']].category if row['device_id'] in Device.obj else 'Dispositivo Desconhecido' }} (SN: {{ row['device_id'] }})
+                                    {{ Device.obj[row['device_id']|int].category if row['device_id']|int in Device.obj else 'Dispositivo Desconhecido' }} (SN: {{ row['device_id'] }})
                                 </td>
                                 <td class="col-numeric">{{ "%.2f"|format(row['amount']|float) }} €</td>
                             
@@ -234,7 +233,6 @@
         {% endif %}
     {% endif %}
 </div>
-
 
 <template id="template_raio_x">
     <div id="painel_raio_x" style="background: #f8fafc; border-radius: 20px; padding: 28px; border: 1px solid #e2e8f0; margin: 15px 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">

@@ -27,6 +27,17 @@ appy.config["TEMPLATES_AUTO_RELOAD"] = True          # reload automático de tem
 appy.secret_key = 'CHAVE_SECRETA_HOSPITAL'
 appy.jinja_env.globals['getattr'] = getattr          # getattr disponível nos templates Jinja
 
+@appy.context_processor
+def inject_user_group():
+    """Injeta user_group em todos os templates automaticamente."""
+    user = session.get("user")
+    user_group = ""
+    if user:
+        current_user_obj = Userlogin.find(user, 'user')
+        if current_user_obj:
+            user_group = current_user_obj[0].usergroup
+    return dict(user_group=user_group)
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -45,6 +56,43 @@ Hospital.read(db_name)
 Department.read(db_name)
 Device.read(db_name)
 Utilization.read(db_name)
+
+# Migração e seed de utilizadores (corre automaticamente ao iniciar)
+def migrate_and_seed():
+    con = sqlite3.connect(db_name)
+    cur = con.cursor()
+    for col in ('hospital_id INTEGER', 'department_id INTEGER'):
+        try:
+            cur.execute(f'ALTER TABLE Userlogin ADD COLUMN {col}')
+        except sqlite3.OperationalError:
+            pass  # coluna já existe
+    USERS = [
+        ('admin1',   'admin',        '$2b$12$HxzueDuImgA9.dx2pj12e.y4O7UspMPbWfjw5qW2SvBtRSNLCerhi', None, None),
+        ('admin2',   'admin',        '$2b$12$aN8BcvsvNWEfXvKL6sbdq.N5Uid2lSFecsf41tiuQmdHrGomlEavO', None, None),
+        ('admin3',   'admin',        '$2b$12$mXao3uUhZAqbOcwwRcKLtuq6XF.f3TcQaGRp4GAme2Gi7CH0/fabu', None, None),
+        ('manager1', 'manager',      '$2b$12$ZfEt/EAQQmtdx0zl17yeqeOaeFQDf37LGuEyrzqR4gq7gB5Q87CoG', 1,    None),
+        ('manager2', 'manager',      '$2b$12$YqBRukbQaTuNfcLG8ai/guIilANcpOYdMe6zoUD455u8ppZsgCKJy', 2,    None),
+        ('manager3', 'manager',      '$2b$12$4rcuxg4yKFLrt/xWRmIUE.DxlzrZ14VJnOKvIs3iexkw.qsYj97Aq', 3,    None),
+        ('deptmgr1', 'dept_manager', '$2b$12$jai7R4FYMjzduHhKWtaU7.kimjQxRdY8cLi9FF1F14BigugK64iYO', Department.obj[1001].hospital_id, 1001),
+        ('deptmgr2', 'dept_manager', '$2b$12$V5Hs7H2rg4guVfiWwtoymOaMvkx4li8JUHpdlIOL9p6iRJvIsdXKa', Department.obj[1002].hospital_id, 1002),
+        ('deptmgr3', 'dept_manager', '$2b$12$GO7qMNLsv3E6xFeeLJzEJuKY8OgQtyMz0EBTd1szcCeQLupUp4VTy', Department.obj[1003].hospital_id, 1003),
+        ('analyst1', 'analyst',      '$2b$12$ofE3rdrCh872TfiSBjmvN.G8u/s3MsoYlzKWGnfeo.BhFWvLsnipy', None, None),
+        ('analyst2', 'analyst',      '$2b$12$yW0yH6BQC9CidBoea3UBjezFkewj0limTZUrk25UV2j7zzOdn0R9O', None, None),
+        ('analyst3', 'analyst',      '$2b$12$7lLeqrRlI6Fsyx87wbvMrOhdXaAwlffXIgJVr0uU/h4OqBxeRyPbu', None, None),
+    ]
+    for user, usergroup, pwd_hash, hosp_id, dept_id in USERS:
+        cur.execute('SELECT id FROM Userlogin WHERE user = ?', (user,))
+        if cur.fetchone() is None:
+            cur.execute(
+                'INSERT INTO Userlogin (user, usergroup, password, hospital_id, department_id) VALUES (?,?,?,?,?)',
+                (user, usergroup, pwd_hash, hosp_id, dept_id)
+            )
+    con.commit()
+    con.close()
+
+migrate_and_seed()
+
+
 
 prev_option = ""
 
@@ -157,9 +205,6 @@ def analise_saturacao_departamentos():
     df_final = df_criticos.merge(df_hospitais, on='hospital_id', how='inner')
     df_final['amount'] = df_final['amount'].round(2)
     df_final['desvio_perc'] = df_final['desvio_perc'].round(1)
-    print(f"DEBUG df_dept_gastos:\n{df_dept_gastos}")
-    print(f"DEBUG df_criticos:\n{df_criticos}")
-    print(f"DEBUG df_final:\n{df_final}")
     result = df_final[['hospital_name', 'dept_title', 'dept_id', 'amount', 'desvio_perc']].to_dict(orient='records')
     return result
     
@@ -231,7 +276,6 @@ def stats():
         ORDER BY period
     ''', con)
     
-    
     df_vol = pd.read_sql_query('''
         WITH hosp_monthly AS (
             SELECT strftime('%Y-%m', u.utilization_date) as period,
@@ -280,7 +324,7 @@ def stats():
     )
 
 
-@appy.route("/index", methods=["post", "get"])
+@appy.route("/index", methods=["post", "get"]) # autoria: martim
 @login_required
 def index():
     
@@ -291,10 +335,69 @@ def index():
     session["current_class"] = current_class_name
     cl = classes_map[current_class_name]
 
+    # ── Restrições por grupo (autoria: tiago) ──────────────────────────────────
+    # Analyst: só pode navegar e listar, nunca alterar
+    # dept_manager: só pode inserir/editar/apagar Utilizações do seu departamento
+    # manager: só pode inserir/editar/apagar no seu hospital e seus departamentos
+    # admin: acesso total
+    option = request.args.get("option")
+    OPCOES_ESCRITA = ('insert', 'edit', 'delete', 'save')
+    
+    esta_a_escrever = (option in OPCOES_ESCRITA or prev_option in ('insert', 'edit'))
+
+    # Agora a variável vai ser usada para extrair as permissões regionais/departamentais:
+    user_objeto = current_user_obj[0] if current_user_obj else None
+
+    
+    if user_group == 'analyst':
+        if esta_a_escrever:
+            flash("Não tem permissões para alterar registos.", "error")
+            return redirect(f"/index?class={current_class_name}")
+
+    
+    if user_group == 'dept_manager':
+        if current_class_name == 'Hospital':
+            flash("Não tem permissões para visualizar dados de Hospitais.", "error")
+            return redirect("/index?class=Department")
+            
+        if esta_a_escrever:
+            if current_class_name != 'Utilization':
+                flash("Apenas pode adicionar/editar Utilizações.", "error")
+                return redirect("/index?class=Utilization")
+            
+            
+            if option == 'save' and user_objeto:
+                form_dept_id = request.form.get('department_id')
+                user_dept_id = getattr(user_objeto, 'department_id', None)
+                if form_dept_id and str(form_dept_id) != str(user_dept_id):
+                    flash("Não tem permissão para lançar utilizações noutros departamentos.", "error")
+                    return redirect("/index?class=Utilization")
+
+    
+    if user_group == 'manager':
+        if current_class_name == 'Userlogin':
+            flash("Acesso restrito à gestão de utilizadores.", "error")
+            return redirect("/index?class=Hospital")
+            
+        if esta_a_escrever:
+            if current_class_name in ('Hospital', 'Device', 'Userlogin'):
+                flash("Não tem permissões para alterar este tipo de registo.", "error")
+                return redirect(f"/index?class={current_class_name}")
+            
+            
+            if option == 'save' and user_objeto:
+                user_hosp_id = getattr(user_objeto, 'hospital_id', None)
+                
+                if current_class_name == 'Department':
+                    form_hosp_id = request.form.get('hospital_id')
+                    if form_hosp_id and str(form_hosp_id) != str(user_hosp_id):
+                        flash("Não pode criar/editar departamentos noutros hospitais.", "error")
+                        return redirect("/index?class=Department")
+    # ────────────────────────────────────────────────────────────────────────
+
     butshow, butedit = "enabled", "disabled"
     show_list = False
     list_data = []
-    option = request.args.get("option")
 
     if option == "edit": butshow, butedit = "disabled", "enabled"
     elif option == "delete":
@@ -327,14 +430,14 @@ def index():
             cl.insert(obj.id)
             cl.last()
             flash("Registo inserido com sucesso!", "success")
-            return redirect(f"/index?class={current_class_name}") # Para o código aqui se correr bem
+            return redirect(f"/index?class={current_class_name}")
             
         except ValueError as ve:
             flash(str(ve), "error")
-            return redirect(f"/index?class={current_class_name}&option=insert") # Para aqui e limpa o fluxo
+            return redirect(f"/index?class={current_class_name}&option=insert")
         except Exception as e:
             flash(f"Erro ao inserir: {e}", "error")
-            return redirect(f"/index?class={current_class_name}&option=insert") # Para aqui e limpa o fluxo
+            return redirect(f"/index?class={current_class_name}&option=insert")
 
     elif prev_option == 'edit' and option == 'save':
         try:
@@ -357,14 +460,14 @@ def index():
                     
             cl.update(int(obj.id))
             flash("Registo atualizado com sucesso!", "success")
-            return redirect(f"/index?class={current_class_name}") # Para o código aqui se correr bem
+            return redirect(f"/index?class={current_class_name}")
             
         except ValueError as ve:
             flash(str(ve), "error")
-            return redirect(f"/index?class={current_class_name}&option=edit") # Para aqui e limpa o fluxo
+            return redirect(f"/index?class={current_class_name}&option=edit")
         except Exception as e:
             flash(f"Erro ao atualizar: {e}", "error")
-            return redirect(f"/index?class={current_class_name}&option=edit") # Para aqui e limpa o fluxo
+            return redirect(f"/index?class={current_class_name}&option=edit")
         
     elif option == "list":
         show_list = True
@@ -394,7 +497,7 @@ def index():
                            Hospital=Hospital, Department=Department, Device=Device, Utilization=Utilization, Userlogin=Userlogin,
                            class_name=current_class_name, id=obj_id, fields=fields, header=cl.header, titles=cl.des,
                            butshow=butshow, butedit=butedit, show_list=show_list, list_data=list_data,
-                           ulogin=session.get("user"), user_group=user_group)
+                           ulogin=session.get("user"), user_group=user_group, obj = obj)
 
 @appy.route("/search")
 @login_required # autoria: couto
@@ -408,7 +511,6 @@ def search():
 
     attributes = [a[1:] for a in cls.att[1:]]
 
-    # adicionar nomes para selecionar na pesquisa
     if class_name == 'Utilization':
         attributes = [a for a in attributes if a not in ['department_id', 'device_id']]
         attributes.extend(['department_name', 'device_name', 'hospital_name'])
@@ -427,7 +529,6 @@ def search():
         if not value: continue
         filtered = []
         for obj in results:
-            # lógica para obter valores corretos, ids ou nomes
             if att == 'department_name': obj_val = getattr(obj, 'department_name', "")
             elif att == 'device_name': obj_val = getattr(obj, 'device_name', "")
             elif att == 'hospital_name': obj_val = getattr(obj, 'hospital_name', "")
@@ -535,11 +636,8 @@ def api_hospital_details(hospital_id):
 def api_department_saturation(dept_id):
 
     todos_os_desvios = analise_saturacao_departamentos()
-    
-    print(f"DEBUG dept_id procurado: {dept_id}")
-    print(f"DEBUG dept_ids disponíveis: {[d.get('dept_id') for d in todos_os_desvios]}")
-
     dados_alvo = None
+    
     for d in todos_os_desvios:
         if int(d.get('dept_id', -1)) == dept_id:
             dados_alvo = d
@@ -562,8 +660,6 @@ def api_department_saturation(dept_id):
             
     if not dados_alvo:
         return jsonify({"has_data": False})
-    
-
 
     return jsonify({
         "has_data": True,
